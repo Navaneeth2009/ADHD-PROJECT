@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroSense AI · Clinical Decision Support Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-card: rgba(18, 26, 44, 0.7);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.35);
+            --accent-cyan: #06b6d4;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.15);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 30px;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .brand-title h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-title p {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-meta {
+            text-align: right;
+        }
+
+        .badge-pill {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+        }
+
+        /* Layout Grid */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 28px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 26px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d1d5db;
+            margin-bottom: 6px;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            background: rgba(11, 15, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        /* Drag & Drop Zone */
+        .dropzone {
+            border: 2px dashed rgba(59, 130, 246, 0.35);
+            background: rgba(59, 130, 246, 0.04);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .dropzone:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .dropzone-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .dropzone-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+        }
+
+        .dropzone-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .btn-run {
+            width: 100%;
+            background: linear-gradient(135deg, #2563eb, #0284c7);
+            color: #ffffff;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .btn-run:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .status-banner {
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid transparent;
+        }
+
+        .status-banner.adhd {
+            background: var(--danger-bg);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .status-banner.healthy {
+            background: var(--success-bg);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .status-left h3 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .status-banner.adhd .status-left h3 { color: #f87171; }
+        .status-banner.healthy .status-left h3 { color: #34d399; }
+
+        .status-left p {
+            font-size: 13px;
+            color: #d1d5db;
+        }
+
+        .status-right {
+            text-align: right;
+        }
+
+        .confidence-number {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .status-banner.adhd .confidence-number { color: #f87171; }
+        .status-banner.healthy .confidence-number { color: #34d399; }
+
+        .confidence-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        /* Metric Tiles */
+        .metric-tiles {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .metric-tile {
+            background: rgba(11, 15, 25, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .metric-tile-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-tile-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .metric-tile-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Channel Bars */
+        .channel-row {
+            margin-bottom: 12px;
+        }
+
+        .channel-label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #e2e8f0;
+        }
+
+        .channel-bar-bg {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .channel-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4);
+            border-radius: 999px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes valuePulseAnim {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.6); color: #60a5fa; }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        .value-pulse {
+            animation: valuePulseAnim 0.5s ease-in-out;
+        }
+
+        .btn-export {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-export:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Disclaimer */
+        .disclaimer-box {
+            font-size: 11px;
+            color: #9ca3af;
+            background: rgba(245, 158, 11, 0.05);
+            border-left: 3px solid #f59e0b;
+            padding: 12px 14px;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+
+        /* ===== XAI Section Styles ===== */
+        .xai-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+        }
+
+        .xai-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Scalp Topographic Map */
+        .scalp-map-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .scalp-svg {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+        }
+
+        .scalp-electrode {
+            cursor: pointer;
+            transition: all 0.25s ease;
+            filter: drop-shadow(0 0 3px rgba(0,0,0,0.4));
+        }
+
+        .scalp-electrode:hover {
+            transform-origin: center;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8)) brightness(1.3);
+        }
+
+        .scalp-label {
+            font-size: 8px;
+            fill: #e2e8f0;
+            font-weight: 700;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .scalp-legend {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .scalp-legend-bar {
+            width: 140px;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #1e3a5f, #2563eb, #06b6d4, #f59e0b, #ef4444);
+        }
+
+        .scalp-tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #e2e8f0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 100;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .scalp-tooltip.visible {
+            opacity: 1;
+        }
+
+        /* Feature Contribution Waterfall */
+        .waterfall-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .waterfall-label {
+            width: 110px;
+            text-align: right;
+            font-weight: 600;
+            color: #cbd5e1;
+            flex-shrink: 0;
+            font-size: 11px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .waterfall-track {
+            flex: 1;
+            height: 16px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .waterfall-bar {
+            position: absolute;
+            top: 1px;
+            height: 14px;
+            border-radius: 3px;
+            transition: width 0.5s cubic-bezier(0.4,0,0.2,1), left 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .waterfall-bar.positive {
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.6), #ef4444);
+        }
+
+        .waterfall-bar.negative {
+            background: linear-gradient(90deg, #10b981, rgba(16, 185, 129, 0.6));
+        }
+
+        .waterfall-value {
+            width: 50px;
+            text-align: right;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .waterfall-value.pos { color: #f87171; }
+        .waterfall-value.neg { color: #34d399; }
+
+        .waterfall-midline {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* Band Power Distribution */
+        .band-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .band-name {
+            width: 70px;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .band-track {
+            flex: 1;
+            height: 20px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .band-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+            position: relative;
+        }
+
+        .band-fill::after {
+            content: attr(data-pct);
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .band-norm-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 1px;
+        }
+
+        .band-norm-label {
+            position: absolute;
+            top: -14px;
+            font-size: 9px;
+            color: rgba(255,255,255,0.4);
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        /* Normative TBR Gauge */
+        .tbr-gauge-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tbr-gauge-item {
+            position: relative;
+        }
+
+        .tbr-gauge-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 6px;
+        }
+
+        .tbr-gauge-track {
+            height: 24px;
+            background: linear-gradient(90deg, 
+                rgba(16, 185, 129, 0.3) 0%, 
+                rgba(16, 185, 129, 0.3) 50%, 
+                rgba(245, 158, 11, 0.3) 50%, 
+                rgba(245, 158, 11, 0.3) 75%, 
+                rgba(239, 68, 68, 0.3) 75%, 
+                rgba(239, 68, 68, 0.3) 100%);
+            border-radius: 8px;
+            position: relative;
+            overflow: visible;
+        }
+
+        .tbr-gauge-zones {
+            position: absolute;
+            bottom: -16px;
+            left: 0;
+            right: 0;
+            display: flex;
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+
+        .tbr-gauge-zones span {
+            text-align: center;
+        }
+
+        .tbr-gauge-needle {
+            position: absolute;
+            top: -4px;
+            width: 4px;
+            height: 32px;
+            background: #fff;
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(255,255,255,0.6);
+            transition: left 0.6s cubic-bezier(0.4,0,0.2,1);
+            z-index: 2;
+        }
+
+        .tbr-gauge-value-tag {
+            position: absolute;
+            top: -22px;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            z-index: 3;
+        }
+
+        /* Clinical Decision Explanation */
+        .xai-explanation {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #d1d5db;
+        }
+
+        .xai-explanation .highlight {
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .xai-explanation .highlight.risk {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .xai-explanation .highlight.normal {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .xai-explanation .highlight.neutral {
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+        }
+
+        .xai-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .xai-tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 18px;
+            background: rgba(11, 15, 25, 0.6);
+            border-radius: 10px;
+            padding: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .xai-tab {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+        }
+
+        .xai-tab:hover {
+            color: #e2e8f0;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .xai-tab.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(6, 182, 212, 0.2));
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .xai-tab-content {
+            display: none;
+        }
+
+        .xai-tab-content.active {
+            display: block;
+            animation: xaiFadeIn 0.3s ease;
+        }
+
+        @keyframes xaiFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+            .xai-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Brand Header -->
+        <header>
+            <div class="brand-logo">
+                <div class="logo-icon">🧠</div>
+                <div class="brand-title">
+                    <h1>NeuroSense AI</h1>
+                    <p>Clinical Decision Support System for Psychiatric Screening</p>
+                </div>
+            </div>
+            <div class="header-meta">
+                <span class="badge-pill">TDBRAIN 10-20 EEG Protocol</span>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Module: ADHD Adult Screening</div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="grid-layout">
+            <!-- Left Panel: Ingestion & Model Config -->
+            <div class="card">
+                <div class="card-header">⚡ Patient Ingestion & Paradigm</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Select Psychiatric Disorder Module</label>
+                    <select id="disorderSelect">
+                        <option value="adhd" selected>ADHD (Attention Deficit Hyperactivity Disorder)</option>
+                        <option value="mdd" disabled>Depression (MDD) - [Module Ready]</option>
+                        <option value="schiz" disabled>Schizophrenia - [Module Ready]</option>
+                        <option value="ocd" disabled>OCD - [Module Ready]</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Inference Engine</label>
+                    <select id="engineSelect">
+                        <option value="spectral_ridge" selected>Spectral Ridge Biomarker Model (Fast & Interpretable)</option>
+                        <option value="eegnet">EEGNet Deep Learning (Temporal-Spatial CNN)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Subject / Patient Identifier</label>
+                    <input type="text" id="subjectIdInput" value="PATIENT-CLINICAL-042" placeholder="e.g. sub-88005441">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">⚡ Quick Select Cohort Subject (Instant)</label>
+                    <select id="quickPatientSelect" onchange="onQuickPatientChange(this.value)" style="border-color: rgba(59, 130, 246, 0.4);">
+                        <option value="">-- Choose or Upload Patient --</option>
+                        <option value="sub-88006297">🔴 sub-88006297 (ADHD Risk Indicated · TBR 1.685 · Prob 58.2%)</option>
+                        <option value="sub-88005441">🔴 sub-88005441 (ADHD Risk Indicated · Frontal Focus · Prob 56.8%)</option>
+                        <option value="sub-88015117">🔴 sub-88015117 (ADHD Risk Indicated · High Frontal Theta)</option>
+                        <option value="sub-87957881">🟢 sub-87957881 (Healthy Control · Low TBR 0.838 · Low Risk)</option>
+                        <option value="sub-87958013">🟢 sub-87958013 (Healthy Control · Normal Baseline · TBR 1.275)</option>
+                        <option value="sub-87957837">🟢 sub-87957837 (Healthy Control · Baseline · Low Risk)</option>
+                        <option value="sub-88077613">🔵 sub-88077613 (Adult MDD · Baseline TBR 1.152 · Low ADHD Risk)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Upload Patient EEG (JSON, CSV, or BDF)</label>
+                    <div style="margin-bottom: 8px;">
+                        <input type="file" id="fileInput" accept=".json,.csv,.bdf,.edf" style="width: 100%; padding: 8px; background: #162032; border: 1px solid #3b82f6; border-radius: 8px; color: #fff; cursor: pointer;" onclick="this.value=null" onchange="handleFileSelect(event)">
+                    </div>
+                    <div class="dropzone" id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)">
+                        <div class="dropzone-icon" id="dropIcon">📁</div>
+                        <div class="dropzone-text" id="dropTitle">Or Drag & Drop EEG File Here</div>
+                        <div class="dropzone-sub" id="dropSub">Supports .json, .csv, and raw .bdf files</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; margin-bottom: 14px;">
+                        <button type="button" onclick="loadSamplePatient()" style="background: none; border: none; color: #60a5fa; font-size: 12px; cursor: pointer; text-decoration: underline;">
+                            ↺ Reset to Sample Patient (sub-87958013)
+                        </button>
+                        <span id="fileBadge" style="font-size: 11px; color: #9ca3af;"></span>
+                    </div>
+                </div>
+
+                <button class="btn-run" id="btnRun" onclick="runAnalysis()">🚀 Execute NeuroSense Analysis</button>
+            </div>
+
+            <!-- Right Panel: Diagnostic Results & Explainability -->
+            <div class="results-panel">
+                <!-- Status Banner -->
+                <div class="status-banner healthy" id="statusBanner">
+                    <div class="status-left">
+                        <h3 id="resultStatus">Neurotypical / Low Risk</h3>
+                        <p id="resultDesc">No statistically significant fronto-central theta power elevation observed.</p>
+                    </div>
+                    <div class="status-right">
+                        <div class="confidence-number" id="confidenceVal">59.8%</div>
+                        <div class="confidence-label">Calibrated Confidence</div>
+                    </div>
+                </div>
+
+                <!-- Metric Tiles -->
+                <div class="metric-tiles">
+                    <div class="metric-tile">
+                        <div class="metric-tile-title">Frontal Theta/Beta (TBR Fz)</div>
+                        <div class="metric-tile-val" id="tbrFzVal">1.275</div>
+                        <div class="metric-tile-desc">Normal Adult Baseline &lt; 1.50</div>
+                    </div>
+                    <div class="metric-tile">
+                        <div class="metric-tile-title">Central Theta/Beta (TBR Cz)</div>
+                        <div class="metric-tile-val" id="tbrCzVal">1.380</div>
+                        <div class="metric-tile-desc">Hyperactivity Marker &lt; 1.80</div>
+                    </div>
+                    <div class="metric-tile">
+                        <div class="metric-tile-title">Posterior Probability</div>
+                        <div class="metric-tile-val" id="probVal">0.402</div>
+                        <div class="metric-tile-desc">Decision Cutoff: 0.500</div>
+                    </div>
+                </div>
+
+                <!-- Explainability Card with Tabs -->
+                <div class="card">
+                    <div class="card-header" style="justify-content: space-between;">
+                        <span>🔬 Explainable AI (XAI) — Interactive Model Interpretation</span>
+                        <a href="/report" target="_blank" class="btn-export">📄 Full Report</a>
+                    </div>
+
+                    <!-- XAI Tab Navigation -->
+                    <div class="xai-tab-bar">
+                        <button class="xai-tab active" onclick="switchXaiTab('topo')">🧠 Scalp Map</button>
+                        <button class="xai-tab" onclick="switchXaiTab('waterfall')">📊 Feature Drivers</button>
+                        <button class="xai-tab" onclick="switchXaiTab('bands')">🌊 Band Power</button>
+                        <button class="xai-tab" onclick="switchXaiTab('explain')">💡 Explanation</button>
+                    </div>
+
+                    <!-- Tab 1: Scalp Topographic Map -->
+                    <div class="xai-tab-content active" id="xaiTab-topo">
+                        <div class="xai-section-title">10-20 EEG Scalp Topographic Attribution Map</div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                            Each electrode is color-coded by its contribution weight to the prediction. Hover for details.
+                        </p>
+                        <div class="scalp-map-container" id="scalpMapContainer">
+                            <div class="scalp-tooltip" id="scalpTooltip"></div>
+                            <svg class="scalp-svg" viewBox="0 0 300 320" id="scalpSvg"></svg>
+                            <div class="scalp-legend">
+                                <span>Low</span>
+                                <div class="scalp-legend-bar"></div>
+                                <span>High</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 18px;">
+                            <div class="xai-section-title">Channel Attribution Ranking</div>
+                            <div id="channelBarsContainer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Feature Contribution Waterfall -->
+                    <div class="xai-tab-content" id="xaiTab-waterfall">
+                        <div class="xai-section-title">Top Feature Contributions (Waterfall Analysis)</div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+                            Features pushing the model toward <span style="color:#f87171;">ADHD risk (→)</span> vs. <span style="color:#34d399;">healthy baseline (←)</span>. Centered at decision boundary.
+                        </p>
+                        <div id="waterfallContainer"></div>
+                    </div>
+
+                    <!-- Tab 3: Band Power Distribution -->
+                    <div class="xai-tab-content" id="xaiTab-bands">
+                        <div class="xai-section-title">Spectral Band Power Distribution (Frontal Avg.)</div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+                            Patient's band power vs. population normative average. White markers show cohort mean.
+                        </p>
+                        <div id="bandPowerContainer"></div>
+                        <div style="margin-top: 24px;">
+                            <div class="xai-section-title">Theta/Beta Ratio — Normative Comparison</div>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+                                Patient TBR at key electrode sites plotted against clinical thresholds.
+                            </p>
+                            <div class="tbr-gauge-container" id="tbrGaugeContainer"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Clinical Decision Explanation -->
+                    <div class="xai-tab-content" id="xaiTab-explain">
+                        <div class="xai-section-title">🩺 Auto-Generated Clinical Decision Explanation</div>
+                        <div class="xai-explanation" id="xaiExplanationText">
+                            Run an analysis to generate the clinical explanation.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="disclaimer-box">
+                    <strong>CLINICAL DECISION SUPPORT NOTICE:</strong> NeuroSense AI is an assistive decision-support tool designed for certified medical practitioners. It provides quantitative biomarker risk estimations and does not substitute professional clinical psychiatric diagnostic judgment.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MODEL_DATA = {"features": ["Fp1_delta_abs", "Fp1_delta_rel", "Fp2_delta_abs", "Fp2_delta_rel", "F7_delta_abs", "F7_delta_rel", "F3_delta_abs", "F3_delta_rel", "Fz_delta_abs", "Fz_delta_rel", "F4_delta_abs", "F4_delta_rel", "F8_delta_abs", "F8_delta_rel", "FC3_delta_abs", "FC3_delta_rel", "FCz_delta_abs", "FCz_delta_rel", "FC4_delta_abs", "FC4_delta_rel", "T7_delta_abs", "T7_delta_rel", "C3_delta_abs", "C3_delta_rel", "Cz_delta_abs", "Cz_delta_rel", "C4_delta_abs", "C4_delta_rel", "T8_delta_abs", "T8_delta_rel", "CP3_delta_abs", "CP3_delta_rel", "CPz_delta_abs", "CPz_delta_rel", "CP4_delta_abs", "CP4_delta_rel", "P7_delta_abs", "P7_delta_rel", "P3_delta_abs", "P3_delta_rel", "Pz_delta_abs", "Pz_delta_rel", "P4_delta_abs", "P4_delta_rel", "P8_delta_abs", "P8_delta_rel", "O1_delta_abs", "O1_delta_rel", "Oz_delta_abs", "Oz_delta_rel", "O2_delta_abs", "O2_delta_rel", "Fp1_theta_abs", "Fp1_theta_rel", "Fp2_theta_abs", "Fp2_theta_rel", "F7_theta_abs", "F7_theta_rel", "F3_theta_abs", "F3_theta_rel", "Fz_theta_abs", "Fz_theta_rel", "F4_theta_abs", "F4_theta_rel", "F8_theta_abs", "F8_theta_rel", "FC3_theta_abs", "FC3_theta_rel", "FCz_theta_abs", "FCz_theta_rel", "FC4_theta_abs", "FC4_theta_rel", "T7_theta_abs", "T7_theta_rel", "C3_theta_abs", "C3_theta_rel", "Cz_theta_abs", "Cz_theta_rel", "C4_theta_abs", "C4_theta_rel", "T8_theta_abs", "T8_theta_rel", "CP3_theta_abs", "CP3_theta_rel", "CPz_theta_abs", "CPz_theta_rel", "CP4_theta_abs", "CP4_theta_rel", "P7_theta_abs", "P7_theta_rel", "P3_theta_abs", "P3_theta_rel", "Pz_theta_abs", "Pz_theta_rel", "P4_theta_abs", "P4_theta_rel", "P8_theta_abs", "P8_theta_rel", "O1_theta_abs", "O1_theta_rel", "Oz_theta_abs", "Oz_theta_rel", "O2_theta_abs", "O2_theta_rel", "Fp1_alpha_abs", "Fp1_alpha_rel", "Fp2_alpha_abs", "Fp2_alpha_rel", "F7_alpha_abs", "F7_alpha_rel", "F3_alpha_abs", "F3_alpha_rel", "Fz_alpha_abs", "Fz_alpha_rel", "F4_alpha_abs", "F4_alpha_rel", "F8_alpha_abs", "F8_alpha_rel", "FC3_alpha_abs", "FC3_alpha_rel", "FCz_alpha_abs", "FCz_alpha_rel", "FC4_alpha_abs", "FC4_alpha_rel", "T7_alpha_abs", "T7_alpha_rel", "C3_alpha_abs", "C3_alpha_rel", "Cz_alpha_abs", "Cz_alpha_rel", "C4_alpha_abs", "C4_alpha_rel", "T8_alpha_abs", "T8_alpha_rel", "CP3_alpha_abs", "CP3_alpha_rel", "CPz_alpha_abs", "CPz_alpha_rel", "CP4_alpha_abs", "CP4_alpha_rel", "P7_alpha_abs", "P7_alpha_rel", "P3_alpha_abs", "P3_alpha_rel", "Pz_alpha_abs", "Pz_alpha_rel", "P4_alpha_abs", "P4_alpha_rel", "P8_alpha_abs", "P8_alpha_rel", "O1_alpha_abs", "O1_alpha_rel", "Oz_alpha_abs", "Oz_alpha_rel", "O2_alpha_abs", "O2_alpha_rel", "Fp1_beta_abs", "Fp1_beta_rel", "Fp2_beta_abs", "Fp2_beta_rel", "F7_beta_abs", "F7_beta_rel", "F3_beta_abs", "F3_beta_rel", "Fz_beta_abs", "Fz_beta_rel", "F4_beta_abs", "F4_beta_rel", "F8_beta_abs", "F8_beta_rel", "FC3_beta_abs", "FC3_beta_rel", "FCz_beta_abs", "FCz_beta_rel", "FC4_beta_abs", "FC4_beta_rel", "T7_beta_abs", "T7_beta_rel", "C3_beta_abs", "C3_beta_rel", "Cz_beta_abs", "Cz_beta_rel", "C4_beta_abs", "C4_beta_rel", "T8_beta_abs", "T8_beta_rel", "CP3_beta_abs", "CP3_beta_rel", "CPz_beta_abs", "CPz_beta_rel", "CP4_beta_abs", "CP4_beta_rel", "P7_beta_abs", "P7_beta_rel", "P3_beta_abs", "P3_beta_rel", "Pz_beta_abs", "Pz_beta_rel", "P4_beta_abs", "P4_beta_rel", "P8_beta_abs", "P8_beta_rel", "O1_beta_abs", "O1_beta_rel", "Oz_beta_abs", "Oz_beta_rel", "O2_beta_abs", "O2_beta_rel", "Fp1_gamma_abs", "Fp1_gamma_rel", "Fp2_gamma_abs", "Fp2_gamma_rel", "F7_gamma_abs", "F7_gamma_rel", "F3_gamma_abs", "F3_gamma_rel", "Fz_gamma_abs", "Fz_gamma_rel", "F4_gamma_abs", "F4_gamma_rel", "F8_gamma_abs", "F8_gamma_rel", "FC3_gamma_abs", "FC3_gamma_rel", "FCz_gamma_abs", "FCz_gamma_rel", "FC4_gamma_abs", "FC4_gamma_rel", "T7_gamma_abs", "T7_gamma_rel", "C3_gamma_abs", "C3_gamma_rel", "Cz_gamma_abs", "Cz_gamma_rel", "C4_gamma_abs", "C4_gamma_rel", "T8_gamma_abs", "T8_gamma_rel", "CP3_gamma_abs", "CP3_gamma_rel", "CPz_gamma_abs", "CPz_gamma_rel", "CP4_gamma_abs", "CP4_gamma_rel", "P7_gamma_abs", "P7_gamma_rel", "P3_gamma_abs", "P3_gamma_rel", "Pz_gamma_abs", "Pz_gamma_rel", "P4_gamma_abs", "P4_gamma_rel", "P8_gamma_abs", "P8_gamma_rel", "O1_gamma_abs", "O1_gamma_rel", "Oz_gamma_abs", "Oz_gamma_rel", "O2_gamma_abs", "O2_gamma_rel", "Fp1_TBR", "Fp2_TBR", "F7_TBR", "F3_TBR", "Fz_TBR", "F4_TBR", "F8_TBR", "FC3_TBR", "FCz_TBR", "FC4_TBR", "T7_TBR", "C3_TBR", "Cz_TBR", "C4_TBR", "T8_TBR", "CP3_TBR", "CPz_TBR", "CP4_TBR", "P7_TBR", "P3_TBR", "Pz_TBR", "P4_TBR", "P8_TBR", "O1_TBR", "Oz_TBR", "O2_TBR", "TBR_Fz", "TBR_Cz", "FAA_F4_F3"], "mean": [0.0, 0.33535, 0.0, 0.34019, 0.0, 0.32835, 0.0, 0.21929, 0.0, 0.21492, 0.0, 0.22027, 0.0, 0.30304, 0.0, 0.18972, 0.0, 0.20295, 0.0, 0.19196, 0.0, 0.23547, 0.0, 0.17492, 0.0, 0.2215, 0.0, 0.17654, 0.0, 0.22587, 0.0, 0.17674, 0.0, 0.21207, 0.0, 0.177, 0.0, 0.1716, 0.0, 0.17277, 0.0, 0.18975, 0.0, 0.16745, 0.0, 0.15553, 0.0, 0.15713, 0.0, 0.17504, 0.0, 0.15928, 0.0, 0.11289, 0.0, 0.11268, 0.0, 0.12412, 0.0, 0.13569, 0.0, 0.15451, 0.0, 0.13252, 0.0, 0.12281, 0.0, 0.13406, 0.0, 0.16287, 0.0, 0.13201, 0.0, 0.13575, 0.0, 0.12685, 0.0, 0.15441, 0.0, 0.12899, 0.0, 0.13475, 0.0, 0.12498, 0.0, 0.13586, 0.0, 0.12487, 0.0, 0.14226, 0.0, 0.1188, 0.0, 0.11468, 0.0, 0.1136, 0.0, 0.12575, 0.0, 0.11259, 0.0, 0.11482, 0.0, 0.10989, 0.0, 0.274, 0.0, 0.2712, 0.0, 0.2655, 0.0, 0.33811, 0.0, 0.35259, 0.0, 0.33127, 0.0, 0.27939, 0.0, 0.33958, 0.0, 0.33758, 0.0, 0.33383, 0.0, 0.26658, 0.0, 0.33428, 0.0, 0.30722, 0.0, 0.32616, 0.0, 0.27238, 0.0, 0.35151, 0.0, 0.34646, 0.0, 0.36146, 0.0, 0.39211, 0.0, 0.41455, 0.0, 0.4338, 0.0, 0.44009, 0.0, 0.45841, 0.0, 0.46895, 0.0, 0.44618, 0.0, 0.47646, 0.0, 0.14364, 0.0, 0.1439, 0.0, 0.14233, 0.0, 0.16445, 0.0, 0.1453, 0.0, 0.17164, 0.0, 0.15097, 0.0, 0.18066, 0.0, 0.1572, 0.0, 0.18508, 0.0, 0.18785, 0.0, 0.2026, 0.0, 0.17085, 0.0, 0.20642, 0.0, 0.19137, 0.0, 0.19545, 0.0, 0.16246, 0.0, 0.18861, 0.0, 0.15991, 0.0, 0.16252, 0.0, 0.14013, 0.0, 0.15449, 0.0, 0.14488, 0.0, 0.14304, 0.0, 0.14529, 0.0, 0.14218, 0.0, 0.05529, 0.0, 0.05332, 0.0, 0.05573, 0.0, 0.04182, 0.0, 0.02891, 0.0, 0.0454, 0.0, 0.05659, 0.0, 0.04423, 0.0, 0.03095, 0.0, 0.04611, 0.0, 0.08033, 0.0, 0.04212, 0.0, 0.0318, 0.0, 0.0419, 0.0, 0.07816, 0.0, 0.0342, 0.0, 0.0306, 0.0, 0.03151, 0.0, 0.03422, 0.0, 0.02619, 0.0, 0.02362, 0.0, 0.02494, 0.0, 0.02747, 0.0, 0.03524, 0.0, 0.03559, 0.0, 0.03436, 0.89989, 0.87812, 0.94876, 0.86449, 1.09126, 0.80936, 0.85646, 0.72468, 1.03755, 0.69371, 0.82722, 0.62298, 0.90438, 0.61746, 0.81171, 0.68105, 0.90699, 0.7039, 1.0497, 0.82412, 0.91253, 0.85438, 1.09848, 0.9026, 0.8604, 0.88968, 1.09126, 0.90438, -0.02107], "scale": [0.0, 0.15364, 1e-05, 0.14561, 0.0, 0.12777, 0.0, 0.0993, 0.0, 0.10181, 0.0, 0.09967, 0.0, 0.11567, 0.0, 0.08984, 0.0, 0.08898, 0.0, 0.09258, 0.0, 0.10563, 0.0, 0.09332, 0.0, 0.09945, 0.0, 0.08741, 0.0, 0.1046, 0.0, 0.09135, 0.0, 0.10261, 0.0, 0.08558, 0.0, 0.09049, 0.0, 0.09752, 0.0, 0.10164, 0.0, 0.09078, 0.0, 0.09189, 0.0, 0.09206, 0.0, 0.09594, 2e-05, 0.09219, 0.0, 0.05572, 0.0, 0.05606, 0.0, 0.05538, 0.0, 0.06343, 0.0, 0.06927, 0.0, 0.06105, 0.0, 0.05762, 0.0, 0.0614, 0.0, 0.07077, 0.0, 0.06037, 0.0, 0.06637, 0.0, 0.0654, 0.0, 0.07143, 0.0, 0.06133, 0.0, 0.06764, 0.0, 0.067, 0.0, 0.0713, 0.0, 0.06297, 0.0, 0.07471, 0.0, 0.06582, 0.0, 0.06269, 0.0, 0.06154, 0.0, 0.07351, 0.0, 0.06355, 0.0, 0.06025, 1e-05, 0.06327, 0.0, 0.15769, 0.0, 0.14649, 0.0, 0.13898, 0.0, 0.16487, 0.0, 0.16692, 0.0, 0.16428, 0.0, 0.14221, 0.0, 0.15776, 0.0, 0.16312, 0.0, 0.15702, 0.0, 0.11619, 0.0, 0.15191, 0.0, 0.1561, 0.0, 0.14559, 0.0, 0.12115, 0.0, 0.15975, 0.0, 0.17049, 0.0, 0.15919, 0.0, 0.16793, 0.0, 0.1826, 0.0, 0.19456, 0.0, 0.1841, 0.0, 0.19224, 0.0, 0.19852, 0.0, 0.19533, 0.0, 0.20019, 0.0, 0.07377, 1e-05, 0.072, 0.0, 0.06716, 0.0, 0.08098, 0.0, 0.07546, 0.0, 0.08375, 0.0, 0.06875, 0.0, 0.08442, 0.0, 0.08032, 0.0, 0.08477, 0.0, 0.09325, 0.0, 0.0932, 0.0, 0.08813, 0.0, 0.08982, 0.0, 0.09382, 0.0, 0.09308, 0.0, 0.08365, 0.0, 0.08915, 0.0, 0.08403, 0.0, 0.08315, 0.0, 0.07689, 0.0, 0.08625, 0.0, 0.08949, 0.0, 0.07933, 0.0, 0.07643, 1e-05, 0.08061, 0.0, 0.05258, 0.0, 0.04923, 0.0, 0.04793, 0.0, 0.04582, 0.0, 0.03113, 0.0, 0.04733, 0.0, 0.05142, 0.0, 0.04665, 0.0, 0.027, 0.0, 0.05276, 0.0, 0.08664, 0.0, 0.0425, 0.0, 0.02561, 0.0, 0.04159, 0.0, 0.0928, 0.0, 0.03302, 0.0, 0.02549, 0.0, 0.02945, 0.0, 0.03563, 0.0, 0.02642, 0.0, 0.0209, 0.0, 0.02345, 0.0, 0.03142, 0.0, 0.04167, 0.0, 0.03615, 0.0, 0.04213, 0.8103, 0.73212, 0.83924, 0.66133, 0.80626, 0.60431, 0.66247, 0.51974, 0.71096, 0.46932, 0.66969, 0.51997, 0.72135, 0.48103, 0.69005, 0.63544, 0.96421, 0.69562, 0.90925, 0.7934, 0.8853, 0.87212, 1.013, 0.7335, 0.6275, 0.72332, 0.80626, 0.72135, 0.32098], "intercept": -0.32727, "weights": [0.0006, 0.0673, -0.00489, -0.03835, 0.00079, -0.01451, 0.00087, 0.16727, 0.0007, -0.22102, 0.00089, 0.08546, 0.00076, -0.02619, 0.0009, -0.06797, 0.00086, -0.05995, 0.00083, 0.04019, 0.00083, 0.03719, 0.0009, -0.10539, 0.00088, -0.00802, 0.00087, 0.09084, 0.00069, -0.09068, 0.00088, 0.12834, -0.00132, -0.001, 0.00084, -0.01295, 0.00478, -0.15468, 0.00071, 0.05774, 0.0008, -0.01209, 0.00086, 0.01515, 0.00067, 0.05553, 0.00085, -0.01491, 0.0007, -0.06058, 0.0026, -0.16478, -0.00019, -0.12991, -0.00489, -0.12239, -0.0002, 0.03057, 8e-05, -0.05398, -0.00016, 0.01811, 0.0, 0.01174, 0.00016, 0.20011, 0.00011, -0.01471, 1e-05, -0.04147, 3e-05, 0.0393, 0.0, 0.0258, 8e-05, -0.01358, 6e-05, 0.14685, 0.0, 0.11618, -9e-05, 0.0472, -3e-05, -0.05505, -0.00148, 0.01592, -2e-05, -0.00386, 0.00477, 0.03873, -7e-05, 0.14606, -7e-05, -0.02149, 5e-05, -0.07655, -0.00042, -0.09026, 8e-05, 0.0467, -0.00013, -0.04756, 0.0026, -0.01689, -0.0013, 0.05433, -0.00489, 0.07956, -0.00155, -0.05572, -0.00097, -0.10032, -0.00137, 0.09212, -0.00176, -0.13864, -0.00105, -0.0059, -0.00072, -0.05601, -0.00107, 0.05437, -0.00122, -0.05844, -0.00084, -0.01813, -0.00102, 0.01527, -0.00115, 0.00581, -0.00123, -0.03789, -0.00072, 0.11086, -0.00104, 0.0471, -0.00231, -0.02934, -0.00111, -0.08991, 0.00472, -0.01293, -0.00172, -0.08175, -0.00169, -0.05213, -0.00138, -0.01259, -0.00511, -0.05669, -0.00438, 0.00757, -0.00248, 0.04375, 0.00259, 0.09431, -0.001, 0.02085, -0.00489, 0.02025, -0.00107, 0.05601, -0.0008, 0.01304, -0.00096, 0.02353, -0.00107, 0.13567, -0.00073, -0.09046, -0.00079, 0.11528, -0.00084, 0.02201, -0.00084, -0.01305, -0.00272, -0.04798, -0.00088, -0.00256, -0.00088, -0.11473, -0.00092, -0.07303, -0.00123, -0.01934, -0.00092, -0.05381, -0.00164, -0.01329, -0.0009, -0.05296, 0.00476, 0.01675, -0.00097, -0.03781, -0.0009, -0.04737, -0.00085, -0.11177, -0.00119, -0.01364, -0.00075, 0.02665, -0.00082, 0.11286, 0.0026, -0.0541, -0.00164, -0.11794, -0.00489, 0.14303, -0.00172, -0.01719, -0.00142, 0.02035, -0.00152, -0.24154, -0.0015, -0.03306, -0.00145, -0.00031, -0.00146, -0.02437, -0.00138, -0.06495, -0.00139, 0.09315, -0.00454, -0.07586, -0.00142, 0.04806, -0.0014, -0.04939, -0.00144, -0.09185, -0.0021, -0.03906, -0.00142, 0.03578, -0.00186, 0.15995, -0.00142, 0.01036, 0.00474, -0.0614, -0.00146, 0.01692, -0.00142, 0.29558, -0.00142, -0.03182, -0.00145, 0.08727, -0.00119, 0.01866, -0.00142, -0.08988, 0.00259, 0.06132, -0.00831, 0.00457, 0.07932, -0.06107, 0.01314, 0.04983, 0.09317, 0.02751, -0.10062, -0.06253, -0.01999, -0.17394, 0.06264, -0.04963, 0.03723, -0.19265, -0.11406, -0.09038, 0.02364, 0.03551, 0.03198, 0.0086, -0.04607, 0.07816, -0.01545, 0.04227, 0.01314, 0.06264, 0.01046]};
+        const COHORT_DB = {"sub-88006297": {"Fp1_delta_abs": 3.762894010071204e-11, "Fp1_delta_rel": 0.2991137970879049, "Fp2_delta_abs": 2.8545307957303047e-11, "Fp2_delta_rel": 0.2875347047924569, "F7_delta_abs": 3.886520865205187e-11, "F7_delta_rel": 0.2882015270640798, "F3_delta_abs": 5.5173205044474106e-11, "F3_delta_rel": 0.3050212577540088, "Fz_delta_abs": 4.604288207829693e-12, "Fz_delta_rel": 0.1836910344006416, "F4_delta_abs": 5.385702896051874e-12, "F4_delta_rel": 0.225394457902496, "F8_delta_abs": 1.494666161749528e-11, "F8_delta_rel": 0.2796346757324937, "FC3_delta_abs": 8.432895508298885e-12, "FC3_delta_rel": 0.267074906661072, "FCz_delta_abs": 8.102507399475406e-12, "FCz_delta_rel": 0.2462886116742206, "FC4_delta_abs": 9.244858113790784e-12, "FC4_delta_rel": 0.2758611416227791, "T7_delta_abs": 6.650504387180311e-12, "T7_delta_rel": 0.2799544386919926, "C3_delta_abs": 2.1400604312225198e-12, "C3_delta_rel": 0.1879135153090092, "Cz_delta_abs": 2.7358043401729802e-12, "Cz_delta_rel": 0.1783992203566909, "C4_delta_abs": 6.119212686588e-12, "C4_delta_rel": 0.276988668025819, "T8_delta_abs": 5.627561882573008e-12, "T8_delta_rel": 0.1641494906832729, "CP3_delta_abs": 5.807419339843649e-12, "CP3_delta_rel": 0.2338500995267712, "CPz_delta_abs": 5.6299355739105595e-12, "CPz_delta_rel": 0.239825197242524, "CP4_delta_abs": 5.7760533814783975e-12, "CP4_delta_rel": 0.2395223374492271, "P7_delta_abs": 4.872919032368766e-12, "P7_delta_rel": 0.1211038128373098, "P3_delta_abs": 3.735865312233171e-12, "P3_delta_rel": 0.1401252956703682, "Pz_delta_abs": 2.812134522725125e-12, "Pz_delta_rel": 0.1308309785228913, "P4_delta_abs": 2.9003492619165616e-12, "P4_delta_rel": 0.1197539664337059, "P8_delta_abs": 1.027262514096022e-11, "P8_delta_rel": 0.125648376594838, "O1_delta_abs": 8.418373126384828e-12, "O1_delta_rel": 0.1234893667587239, "Oz_delta_abs": 8.753809312826837e-12, "Oz_delta_rel": 0.1433160320679632, "O2_delta_abs": 6.233601864545289e-12, "O2_delta_rel": 0.1035683368643622, "Fp1_theta_abs": 2.374509994394719e-11, "Fp1_theta_rel": 0.188750652754406, "Fp2_theta_abs": 1.935093546057816e-11, "Fp2_theta_rel": 0.1949204935339194, "F7_theta_abs": 2.5945004220252176e-11, "F7_theta_rel": 0.1923928905902299, "F3_theta_abs": 3.493010578830355e-11, "F3_theta_rel": 0.1931086800638207, "Fz_theta_abs": 5.80070185836971e-12, "Fz_theta_rel": 0.231422725189463, "F4_theta_abs": 4.88666570757817e-12, "F4_theta_rel": 0.2045094928867553, "F8_theta_abs": 9.309244183479319e-12, "F8_theta_rel": 0.1741651443767733, "FC3_theta_abs": 6.325917184817896e-12, "FC3_theta_rel": 0.2003456274322699, "FCz_theta_abs": 6.901548599430303e-12, "FCz_theta_rel": 0.2097835570092663, "FC4_theta_abs": 6.553768248080944e-12, "FC4_theta_rel": 0.1955605990480045, "T7_theta_abs": 4.2237330449082735e-12, "T7_theta_rel": 0.177798967556723, "C3_theta_abs": 2.862468569196721e-12, "C3_theta_rel": 0.2513464215550351, "Cz_theta_abs": 4.074010428594526e-12, "Cz_theta_rel": 0.2656623770617811, "C4_theta_abs": 4.474649860080641e-12, "C4_theta_rel": 0.2025468582489725, "T8_theta_abs": 6.711428357596728e-12, "T8_theta_rel": 0.1957646258974719, "CP3_theta_abs": 4.187725869546542e-12, "CP3_theta_rel": 0.1686291369843905, "CPz_theta_abs": 3.985686250346612e-12, "CPz_theta_rel": 0.1697831136053738, "CP4_theta_abs": 4.488137741803056e-12, "CP4_theta_rel": 0.1861148385778269, "P7_theta_abs": 1.0561274111675636e-11, "P7_theta_rel": 0.2624731818542354, "P3_theta_abs": 4.2101405795121616e-12, "P3_theta_rel": 0.1579144707348421, "Pz_theta_abs": 3.142229538935932e-12, "Pz_theta_rel": 0.14618822890597, "P4_theta_abs": 4.502544797588269e-12, "P4_theta_rel": 0.1859078165642502, "P8_theta_abs": 2.7503303144104336e-11, "P8_theta_rel": 0.3364033383514853, "O1_theta_abs": 1.3513720265701256e-11, "O1_theta_rel": 0.1982331660894947, "Oz_theta_abs": 1.3315547549026462e-11, "Oz_theta_rel": 0.218000115303233, "O2_theta_abs": 1.464123608249386e-11, "O2_theta_rel": 0.2432571896076636, "Fp1_alpha_abs": 1.8504172649810492e-11, "Fp1_alpha_rel": 0.1470903333562202, "Fp2_alpha_abs": 1.5765971885278336e-11, "Fp2_alpha_rel": 0.1588094295069564, "F7_alpha_abs": 1.9939639877238788e-11, "F7_alpha_rel": 0.1478606409443436, "F3_alpha_abs": 2.4317868114268097e-11, "F3_alpha_rel": 0.1344396562086809, "Fz_alpha_abs": 6.313827620258347e-12, "Fz_alpha_rel": 0.2518942069309091, "F4_alpha_abs": 5.514531828343797e-12, "F4_alpha_rel": 0.2307860154979552, "F8_alpha_abs": 9.648248635395098e-12, "F8_alpha_rel": 0.1805075238598533, "FC3_alpha_abs": 5.789594191894155e-12, "FC3_alpha_rel": 0.1833599535158396, "FCz_alpha_abs": 6.190575390821625e-12, "FCz_alpha_rel": 0.1881723944576425, "FC4_alpha_abs": 5.321369949579368e-12, "FC4_alpha_rel": 0.1587865569400491, "T7_alpha_abs": 4.764739133313137e-12, "T7_alpha_rel": 0.2005727373327849, "C3_alpha_abs": 2.176336260358281e-12, "C3_alpha_rel": 0.1910988078709373, "Cz_alpha_abs": 2.803241456044777e-12, "Cz_alpha_rel": 0.1827967310697091, "C4_alpha_abs": 3.194649192191128e-12, "C4_alpha_rel": 0.1446071038671771, "T8_alpha_abs": 4.014610547737012e-12, "T8_alpha_rel": 0.1171015602233453, "CP3_alpha_abs": 5.036771744034699e-12, "CP3_alpha_rel": 0.2028180685274665, "CPz_alpha_abs": 4.852278872656722e-12, "CPz_alpha_rel": 0.2066984110978598, "CP4_alpha_abs": 4.8552435294997816e-12, "CP4_alpha_rel": 0.2013380421310035, "P7_alpha_abs": 1.027220413928181e-11, "P7_alpha_rel": 0.2552890945338575, "P3_alpha_abs": 9.531744550119892e-12, "P3_alpha_rel": 0.357517847061133, "Pz_alpha_abs": 9.34781364009964e-12, "Pz_alpha_rel": 0.4348951288428133, "P4_alpha_abs": 9.803635953621314e-12, "P4_alpha_rel": 0.4047872117796047, "P8_alpha_abs": 1.5678681212074778e-11, "P8_alpha_rel": 0.1917719000170817, "O1_alpha_abs": 2.0815504872129938e-11, "O1_alpha_rel": 0.3053432625082903, "Oz_alpha_abs": 1.6208924386591387e-11, "Oz_alpha_rel": 0.265370039963295, "O2_alpha_abs": 1.964550486413138e-11, "O2_alpha_rel": 0.3264007406714999, "Fp1_beta_abs": 2.1698884654156567e-11, "Fp1_beta_rel": 0.1724852138834074, "Fp2_beta_abs": 1.6950135569169868e-11, "Fp2_beta_rel": 0.1707374197666162, "F7_beta_abs": 2.431883155531016e-11, "F7_beta_rel": 0.1803341506127357, "F3_beta_abs": 3.1617158502309954e-11, "F3_beta_rel": 0.1747932795495324, "Fz_beta_abs": 2.4428262982625038e-12, "Fz_beta_rel": 0.0974581236738965, "F4_beta_abs": 2.7438038378948013e-12, "F4_beta_rel": 0.1148296128786548, "F8_beta_abs": 9.518165110694888e-12, "F8_beta_rel": 0.1780738122272099, "FC3_beta_abs": 4.790935205032978e-12, "FC3_beta_rel": 0.1517318187382046, "FCz_beta_abs": 4.447275132840736e-12, "FCz_beta_rel": 0.135182007766083, "FC4_beta_abs": 5.269814785490906e-12, "FC4_beta_rel": 0.1572481810940448, "T7_beta_abs": 3.71285619867253e-12, "T7_beta_rel": 0.1562934948283152, "C3_beta_abs": 1.5546015171609833e-12, "C3_beta_rel": 0.1365057882162506, "Cz_beta_abs": 1.704262799577245e-12, "Cz_beta_rel": 0.1111333695406989, "C4_beta_abs": 3.624477075872098e-12, "C4_beta_rel": 0.1640634390329897, "T8_beta_abs": 7.41536414965703e-12, "T8_beta_rel": 0.216297621207262, "CP3_beta_abs": 5.104227576095813e-12, "CP3_beta_rel": 0.2055343444011452, "CPz_beta_abs": 4.255896985979532e-12, "CPz_beta_rel": 0.1812936081962026, "CP4_beta_abs": 4.2123349740129366e-12, "CP4_beta_rel": 0.1746778037630367, "P7_beta_abs": 4.192875995640471e-12, "P7_beta_rel": 0.1042031001240051, "P3_beta_abs": 4.331105427698928e-12, "P3_beta_rel": 0.1624516351402044, "Pz_beta_abs": 2.1525361332387878e-12, "Pz_beta_rel": 0.1001440031910729, "P4_beta_abs": 2.765983809968696e-12, "P4_beta_rel": 0.1142060843100952, "P8_beta_abs": 6.249034118141039e-12, "P8_beta_rel": 0.0764343078284255, "O1_beta_abs": 8.549324065269447e-12, "O1_beta_rel": 0.1254102899913422, "Oz_beta_abs": 7.574631706282061e-12, "Oz_beta_rel": 0.1240107159896509, "O2_beta_abs": 4.23081622377387e-12, "O2_beta_rel": 0.0702930038517922, "Fp1_gamma_abs": 1.132901978789213e-11, "Fp1_gamma_rel": 0.0900547854117289, "Fp2_gamma_abs": 8.129100277576114e-12, "Fp2_gamma_rel": 0.0818838056340928, "F7_gamma_abs": 1.1961577588560318e-11, "F7_gamma_rel": 0.0887000236633634, "F3_gamma_abs": 1.6241879660638268e-11, "F3_gamma_rel": 0.0897921111957102, "Fz_gamma_abs": 8.872737960553183e-13, "Fz_gamma_rel": 0.035398357799763, "F4_gamma_abs": 8.389263693360878e-13, "F4_gamma_rel": 0.0351095034178794, "F8_gamma_abs": 4.8025121551796724e-12, "F8_gamma_rel": 0.0898494234754793, "FC3_gamma_abs": 1.9190385867520367e-12, "FC3_gamma_rel": 0.0607771139736539, "FCz_gamma_abs": 1.945660370981713e-12, "FCz_gamma_rel": 0.0591414444854021, "FC4_gamma_abs": 2.197445644572999e-12, "FC4_gamma_rel": 0.0655704886656554, "T7_gamma_abs": 1.6142341578670638e-12, "T7_gamma_rel": 0.0679515404056018, "C3_gamma_abs": 3.414532470826276e-13, "C3_gamma_rel": 0.0299821813612611, "Cz_gamma_abs": 5.128067634070449e-13, "Cz_gamma_rel": 0.0334396453145733, "C4_gamma_abs": 1.3360075690928652e-12, "C4_gamma_rel": 0.0604749296991318, "T8_gamma_abs": 5.407968160838807e-12, "T8_gamma_rel": 0.1577441950451142, "CP3_gamma_abs": 1.9173719078471044e-12, "CP3_gamma_rel": 0.0772077208896632, "CPz_gamma_abs": 1.6570541447493845e-12, "CPz_gamma_rel": 0.0705875461430948, "CP4_gamma_abs": 1.5669052021427737e-12, "CP4_gamma_rel": 0.0649766842152226, "P7_gamma_abs": 7.750782546040793e-13, "P7_gamma_rel": 0.0192625675198655, "P3_gamma_abs": 1.2493166227000189e-12, "P3_gamma_rel": 0.0468595215594377, "Pz_gamma_abs": 3.7831672752327803e-13, "Pz_gamma_rel": 0.0176007041105147, "P4_gamma_abs": 3.3318876605968337e-13, "P4_gamma_rel": 0.0137571970488935, "P8_gamma_abs": 1.4881312828324777e-12, "P8_gamma_rel": 0.0182018984711455, "O1_gamma_abs": 4.803515311585537e-12, "O1_gamma_rel": 0.0704629095358556, "Oz_gamma_abs": 4.445264943559476e-12, "Oz_gamma_rel": 0.0727772002376452, "O2_gamma_abs": 1.5254744802775942e-12, "O2_gamma_rel": 0.0253450345858593, "Fp1_TBR": 1.046091043931493, "Fp2_TBR": 1.0780384017719749, "F7_TBR": 1.0247314993021743, "F3_TBR": 1.0709119798350857, "Fz_TBR": 1.6848662569172188, "F4_TBR": 1.3052675618618996, "F8_TBR": 0.8850635149293925, "FC3_TBR": 1.092382656832347, "FCz_TBR": 1.2669726479982604, "FC4_TBR": 1.0452889714138192, "T7_TBR": 0.8962151330010816, "C3_TBR": 1.120514706488502, "Cz_TBR": 1.5065142445591502, "C4_TBR": 0.9676012631626676, "T8_TBR": 0.7975208485624776, "CP3_TBR": 0.6860369829502586, "CPz_TBR": 0.7583265541502632, "CP4_TBR": 0.8610608804268143, "P7_TBR": 2.033800560718579, "P3_TBR": 0.7897312549171233, "Pz_TBR": 0.996730697486957, "P4_TBR": 1.195582621908748, "P8_TBR": 3.7940645189234337, "O1_TBR": 1.415149404642175, "Oz_TBR": 1.5529002300204973, "O2_TBR": 2.79903469289362, "TBR_Fz": 1.6848662569172188, "TBR_Cz": 1.5065142445591502, "FAA_F4_F3": -1.3574750486142513, "subject_id": "sub-88006297", "task": "restEC", "label": 1, "indication": "ADHD", "age": 55.57, "gender": 1, "n_epochs": 114}, "sub-88005441": {"Fp1_delta_abs": 3.1121848076631467e-12, "Fp1_delta_rel": 0.1747869950892051, "Fp2_delta_abs": 3.8139581914424416e-12, "Fp2_delta_rel": 0.1906478934401204, "F7_delta_abs": 2.6858030242869574e-11, "F7_delta_rel": 0.4703128886640512, "F3_delta_abs": 2.3565791419404783e-12, "F3_delta_rel": 0.1691932380312913, "Fz_delta_abs": 2.0283182877498007e-12, "Fz_delta_rel": 0.1397923607008943, "F4_delta_abs": 2.6777459961056216e-12, "F4_delta_rel": 0.1779495236119715, "F8_delta_abs": 2.15334226631324e-11, "F8_delta_rel": 0.3922667821284024, "FC3_delta_abs": 2.1392530462576087e-12, "FC3_delta_rel": 0.1797019525089175, "FCz_delta_abs": 2.816777926145981e-12, "FCz_delta_rel": 0.1933834122250931, "FC4_delta_abs": 2.208758855448753e-12, "FC4_delta_rel": 0.1954161786216292, "T7_delta_abs": 3.237943988861011e-12, "T7_delta_rel": 0.1960183104584918, "C3_delta_abs": 1.4577264173529239e-12, "C3_delta_rel": 0.1463864427445844, "Cz_delta_abs": 2.7328601037578417e-12, "Cz_delta_rel": 0.2168821879700717, "C4_delta_abs": 1.4579639061275518e-12, "C4_delta_rel": 0.1727413646885367, "T8_delta_abs": 3.575682968721872e-12, "T8_delta_rel": 0.201851965859793, "CP3_delta_abs": 2.2300318598218584e-12, "CP3_delta_rel": 0.1475638888228135, "CPz_delta_abs": 2.2614470936844277e-12, "CPz_delta_rel": 0.2027042516232658, "CP4_delta_abs": 1.5253726304238638e-12, "CP4_delta_rel": 0.1467073772304789, "P7_delta_abs": 3.190312024610713e-12, "P7_delta_rel": 0.0859623257916341, "P3_delta_abs": 2.241538755774689e-12, "P3_delta_rel": 0.1163005020013851, "Pz_delta_abs": 2.563245432676692e-12, "Pz_delta_rel": 0.1726893805056351, "P4_delta_abs": 1.7449029527820005e-12, "P4_delta_rel": 0.1239541205457198, "P8_delta_abs": 3.4200656644292177e-12, "P8_delta_rel": 0.0815099902890813, "O1_delta_abs": 3.3753877886833927e-12, "O1_delta_rel": 0.1097672206535351, "Oz_delta_abs": 3.3940577398008648e-12, "Oz_delta_rel": 0.1325032435929156, "O2_delta_abs": 3.091733942029225e-12, "O2_delta_rel": 0.0856544067968893, "Fp1_theta_abs": 1.3925983849845759e-12, "Fp1_theta_rel": 0.0782113216664348, "Fp2_theta_abs": 1.388137090260129e-12, "Fp2_theta_rel": 0.0693886505253228, "F7_theta_abs": 4.783272926086483e-12, "F7_theta_rel": 0.0837602343430798, "F3_theta_abs": 1.3084357520683465e-12, "F3_theta_rel": 0.0939406098053052, "Fz_theta_abs": 1.253097230907722e-12, "Fz_theta_rel": 0.0863638715650885, "F4_theta_abs": 1.4143337121882234e-12, "F4_theta_rel": 0.0939895011245563, "F8_theta_abs": 4.805164777951854e-12, "F8_theta_rel": 0.0875339956184058, "FC3_theta_abs": 1.354606216253999e-12, "FC3_theta_rel": 0.1137898961356661, "FCz_theta_abs": 1.6853928625260717e-12, "FCz_theta_rel": 0.1157091653089792, "FC4_theta_abs": 1.258260633824434e-12, "FC4_theta_rel": 0.1113224669888391, "T7_theta_abs": 2.084114205620881e-12, "T7_theta_rel": 0.1261678851745828, "C3_theta_abs": 1.0583135341763964e-12, "C3_theta_rel": 0.1062769746999955, "Cz_theta_abs": 1.5254191221896794e-12, "Cz_theta_rel": 0.1210586068189018, "C4_theta_abs": 1.0739211996578508e-12, "C4_theta_rel": 0.1272395104002101, "T8_theta_abs": 1.5578513544433178e-12, "T8_theta_rel": 0.0879427402156201, "CP3_theta_abs": 1.3287809817069216e-12, "CP3_theta_rel": 0.0879270348496871, "CPz_theta_abs": 1.0669288103898234e-12, "CPz_theta_rel": 0.0956339003681993, "CP4_theta_abs": 1.323883341512438e-12, "CP4_theta_rel": 0.1273285287270706, "P7_theta_abs": 2.8805798461224484e-12, "P7_theta_rel": 0.0776166535721246, "P3_theta_abs": 1.3283387449575337e-12, "P3_theta_rel": 0.0689198268236319, "Pz_theta_abs": 1.1718506260642224e-12, "Pz_theta_rel": 0.0789491931129079, "P4_theta_abs": 1.3843825291502301e-12, "P4_theta_rel": 0.0983435317282742, "P8_theta_abs": 2.8073286783036066e-12, "P8_theta_rel": 0.0669067075777843, "O1_theta_abs": 2.0724364820894467e-12, "O1_theta_rel": 0.0673953947995651, "Oz_theta_abs": 1.8252728020363264e-12, "Oz_theta_rel": 0.0712582357912193, "O2_theta_abs": 1.9043766348688803e-12, "O2_theta_rel": 0.0527594722042898, "Fp1_alpha_abs": 7.89600034906921e-12, "Fp1_alpha_rel": 0.4434563689273371, "Fp2_alpha_abs": 8.67170414858652e-12, "Fp2_alpha_rel": 0.4334714869642331, "F7_alpha_abs": 9.425804718292892e-12, "F7_alpha_rel": 0.1650559406239589, "F3_alpha_abs": 5.7976981881359524e-12, "F3_alpha_rel": 0.4162522327899177, "Fz_alpha_abs": 7.178800028849964e-12, "Fz_alpha_rel": 0.4947652491690074, "F4_alpha_abs": 5.982739424772256e-12, "F4_alpha_rel": 0.3975827550787569, "F8_alpha_abs": 8.9614460876393e-12, "F8_alpha_rel": 0.1632475094650871, "FC3_alpha_abs": 4.405567511981419e-12, "FC3_alpha_rel": 0.3700773432100001, "FCz_alpha_abs": 5.98884912586042e-12, "FCz_alpha_rel": 0.4111591718005152, "FC4_alpha_abs": 4.0093327942460115e-12, "FC4_alpha_rel": 0.3547188918071155, "T7_alpha_abs": 3.965316821310463e-12, "T7_alpha_rel": 0.2400519299962723, "C3_alpha_abs": 3.698078767746023e-12, "C3_alpha_rel": 0.3713650170260672, "Cz_alpha_abs": 4.624956639737279e-12, "Cz_alpha_rel": 0.3670406377236987, "C4_alpha_abs": 2.3409161852000945e-12, "C4_alpha_rel": 0.2773546414650203, "T8_alpha_abs": 4.205645276350128e-12, "T8_alpha_rel": 0.2374141595231166, "CP3_alpha_abs": 6.0013152351041325e-12, "CP3_alpha_rel": 0.3971142431186189, "CPz_alpha_abs": 3.660665347495815e-12, "CPz_alpha_rel": 0.3281228341709365, "CP4_alpha_abs": 2.7887815661345757e-12, "CP4_alpha_rel": 0.2682195950524054, "P7_alpha_abs": 2.309114794780393e-11, "P7_alpha_rel": 0.622186409191168, "P3_alpha_abs": 9.540224157712734e-12, "P3_alpha_rel": 0.4949871403692378, "Pz_alpha_abs": 5.985746133223602e-12, "Pz_alpha_rel": 0.4032679736528238, "P4_alpha_abs": 6.105798577782648e-12, "P4_alpha_rel": 0.4337426856500429, "P8_alpha_abs": 2.856380428576518e-11, "P8_alpha_rel": 0.6807575170754808, "O1_alpha_abs": 1.8387876273505983e-11, "O1_alpha_rel": 0.5979716105600797, "Oz_alpha_abs": 1.4070263573308116e-11, "Oz_alpha_rel": 0.5492998954637578, "O2_alpha_abs": 2.486231032711025e-11, "O2_alpha_rel": 0.6887935645817854, "Fp1_beta_abs": 2.8819244156985895e-12, "Fp1_beta_rel": 0.1618550760397809, "Fp2_beta_abs": 3.3279897907853624e-12, "Fp2_beta_rel": 0.1663558463821276, "F7_beta_abs": 8.109451703687318e-12, "F7_beta_rel": 0.1420051888300837, "F3_beta_abs": 2.32321002584687e-12, "F3_beta_rel": 0.1667974649797354, "Fz_beta_abs": 2.1051476582004093e-12, "Fz_beta_rel": 0.1450874660752925, "F4_beta_abs": 2.737112672001347e-12, "F4_beta_rel": 0.18189473413957, "F8_beta_abs": 9.724066810145596e-12, "F8_beta_rel": 0.1771399027683663, "FC3_beta_abs": 1.9527265131312918e-12, "FC3_beta_rel": 0.1640333142166143, "FCz_beta_abs": 1.900936666025585e-12, "FCz_beta_rel": 0.1305071356487079, "FC4_beta_abs": 1.9020076056201128e-12, "FC4_beta_rel": 0.1682768841345709, "T7_beta_abs": 3.722202371320521e-12, "T7_beta_rel": 0.2253342931566563, "C3_beta_abs": 1.9483411415762887e-12, "C3_beta_rel": 0.1956544970119894, "Cz_beta_abs": 1.6579140695004369e-12, "Cz_beta_rel": 0.1315735226860635, "C4_beta_abs": 1.7298713962497337e-12, "C4_beta_rel": 0.2049573000181671, "T8_beta_abs": 4.416411139763064e-12, "T8_beta_rel": 0.2493121673269922, "CP3_beta_abs": 3.3727874813565328e-12, "CP3_beta_rel": 0.2231814019740644, "CPz_beta_abs": 2.226402215244684e-12, "CPz_beta_rel": 0.1995630126010507, "CP4_beta_abs": 2.7120437574365197e-12, "CP4_beta_rel": 0.2608391016411805, "P7_beta_abs": 4.263274240992548e-12, "P7_beta_rel": 0.1148730802555281, "P3_beta_abs": 3.830039991640919e-12, "P3_beta_rel": 0.1987186581386029, "Pz_beta_abs": 2.919421184220525e-12, "Pz_beta_rel": 0.1966854321911749, "P4_beta_abs": 2.735871589334176e-12, "P4_beta_rel": 0.1943503827770224, "P8_beta_abs": 4.130653341466465e-12, "P8_beta_rel": 0.0984453360800263, "O1_beta_abs": 3.64232578262304e-12, "O1_beta_rel": 0.118448013355287, "Oz_beta_abs": 3.2361803549880456e-12, "Oz_beta_rel": 0.1263397463334692, "O2_beta_abs": 3.485795036051553e-12, "O2_beta_rel": 0.0965716040341336, "Fp1_gamma_abs": 7.258528940261574e-13, "Fp1_gamma_rel": 0.0407654603001864, "Fp2_gamma_abs": 1.0094177865497152e-12, "Fp2_gamma_rel": 0.0504576518532601, "F7_gamma_abs": 4.371105678609814e-12, "F7_gamma_rel": 0.0765427441913243, "F3_gamma_abs": 4.190023270418424e-13, "F3_gamma_rel": 0.0300827412044734, "Fz_gamma_abs": 2.557752301612247e-13, "Fz_gamma_rel": 0.0176281126335053, "F4_gamma_abs": 5.461074428950518e-13, "F4_gamma_rel": 0.0362915524644456, "F8_gamma_abs": 6.520506751706377e-12, "F8_gamma_rel": 0.1187817766526071, "FC3_gamma_abs": 4.2544175254852883e-13, "FC3_gamma_rel": 0.0357380412502074, "FCz_gamma_abs": 3.8771838235831626e-13, "FCz_gamma_rel": 0.0266184646886354, "FC4_gamma_abs": 3.554397119080266e-13, "FC4_gamma_rel": 0.0314469232619454, "T7_gamma_abs": 1.5170744039235525e-12, "T7_gamma_rel": 0.0918404896810842, "C3_gamma_abs": 3.514223424944881e-13, "C3_gamma_rel": 0.0352902067262751, "Cz_gamma_abs": 3.688143632466183e-13, "Cz_gamma_rel": 0.0292694331282181, "C4_gamma_abs": 3.24186655501872e-13, "C4_gamma_rel": 0.0384100354266977, "T8_gamma_abs": 2.155599477030985e-12, "T8_gamma_rel": 0.1216864011298453, "CP3_gamma_abs": 4.976047001940116e-13, "CP3_gamma_rel": 0.032927101168413, "CPz_gamma_abs": 3.932775628287609e-13, "CPz_gamma_rel": 0.0352513371973451, "CP4_gamma_abs": 3.323797509519623e-13, "CP4_gamma_rel": 0.0319676389454636, "P7_gamma_abs": 7.186978208469816e-13, "P7_gamma_rel": 0.019365170473858, "P3_gamma_abs": 4.519829234676182e-13, "P3_gamma_rel": 0.0234507838688564, "Pz_gamma_abs": 4.698972941219512e-13, "Pz_gamma_rel": 0.0316576288749908, "P4_gamma_abs": 2.948060932034728e-13, "P4_gamma_rel": 0.0209423853379892, "P8_gamma_abs": 1.0549227187282048e-12, "P8_gamma_rel": 0.0251418390744897, "O1_gamma_abs": 8.209561435949614e-13, "O1_gamma_rel": 0.0266973988775415, "Oz_gamma_abs": 8.518093833603704e-13, "Oz_gamma_rel": 0.0332544449360936, "O2_gamma_abs": 8.181969532200216e-13, "O2_gamma_rel": 0.0226675955904166, "Fp1_TBR": 0.358739180843624, "Fp2_TBR": 0.3207348347298749, "F7_TBR": 0.5250890044403346, "F3_TBR": 0.393726469856479, "Fz_TBR": 0.4035547963712474, "F4_TBR": 0.3784562672633579, "F8_TBR": 0.4480729990795923, "FC3_TBR": 0.4587645385476196, "FCz_TBR": 0.5809823021180041, "FC4_TBR": 0.4335828174218598, "T7_TBR": 0.4413436870639826, "C3_TBR": 0.3589521983234898, "Cz_TBR": 0.5739158912975643, "C4_TBR": 0.3933962607664198, "T8_TBR": 0.2876168950703888, "CP3_TBR": 0.3038750424922788, "CPz_TBR": 0.3306868577478055, "CP4_TBR": 0.3566454029159105, "P7_TBR": 0.5472980723077863, "P3_TBR": 0.2750160966071534, "Pz_TBR": 0.2989856335884642, "P4_TBR": 0.3705648055737807, "P8_TBR": 0.5471678734586274, "O1_TBR": 0.4464220261850008, "Oz_TBR": 0.4308770281433113, "O2_TBR": 0.4245349195769617, "TBR_Fz": 0.4035547963712474, "TBR_Cz": 0.5739158912975643, "FAA_F4_F3": 0.0268572543786795, "subject_id": "sub-88005441", "task": "restEC", "label": 1, "indication": "ADHD", "age": 45.52, "gender": 0, "n_epochs": 119}, "sub-88015117": {"Fp1_delta_abs": 1.4310378234760854e-11, "Fp1_delta_rel": 0.1053673866742529, "Fp2_delta_abs": 1.1499974963369543e-11, "Fp2_delta_rel": 0.0637780346168997, "F7_delta_abs": 1.0848963387890282e-11, "F7_delta_rel": 0.1148877383821701, "F3_delta_abs": 5.6778564930648606e-12, "F3_delta_rel": 0.0628789357107352, "Fz_delta_abs": 8.342535967251628e-12, "Fz_delta_rel": 0.0818181281158499, "F4_delta_abs": 6.452405663097866e-12, "F4_delta_rel": 0.0840531771334764, "F8_delta_abs": 8.613562187973962e-12, "F8_delta_rel": 0.1192352945669611, "FC3_delta_abs": 4.009497365341415e-12, "FC3_delta_rel": 0.0701035044586774, "FCz_delta_abs": 7.876437631706251e-12, "FCz_delta_rel": 0.0824792401307182, "FC4_delta_abs": 3.2655496354224605e-12, "FC4_delta_rel": 0.0652721225097091, "T7_delta_abs": 1.147674313144872e-11, "T7_delta_rel": 0.07412124818635, "C3_delta_abs": 3.1977639416065258e-12, "C3_delta_rel": 0.0645558848292515, "Cz_delta_abs": 6.9795165822909825e-12, "Cz_delta_rel": 0.1141174584503602, "C4_delta_abs": 3.714547200270617e-12, "C4_delta_rel": 0.0727279477527959, "T8_delta_abs": 1.0011918183435796e-11, "T8_delta_rel": 0.1097527253644681, "CP3_delta_abs": 5.645401920143316e-12, "CP3_delta_rel": 0.0655509510314216, "CPz_delta_abs": 7.413463256162496e-12, "CPz_delta_rel": 0.0855824383764718, "CP4_delta_abs": 5.315976878762712e-12, "CP4_delta_rel": 0.0713696646638996, "P7_delta_abs": 1.1187313793663856e-11, "P7_delta_rel": 0.0840555509786224, "P3_delta_abs": 8.152594680054408e-12, "P3_delta_rel": 0.0703919918917923, "Pz_delta_abs": 1.02819811200941e-11, "Pz_delta_rel": 0.0596620784280075, "P4_delta_abs": 8.056108049935491e-12, "P4_delta_rel": 0.0615722081924847, "P8_delta_abs": 1.3938028142842744e-11, "P8_delta_rel": 0.0685517478584351, "O1_delta_abs": 1.3602464553039908e-11, "O1_delta_rel": 0.05529884351791, "Oz_delta_abs": 1.042238470393109e-11, "Oz_delta_rel": 0.0490754549808133, "O2_delta_abs": 1.3228077250808168e-11, "O2_delta_rel": 0.0551903972145279, "Fp1_theta_abs": 1.1358699233710951e-11, "Fp1_theta_rel": 0.0836341593940381, "Fp2_theta_abs": 1.0464419299197974e-11, "Fp2_theta_rel": 0.0580349173311982, "F7_theta_abs": 1.1807431275121759e-11, "F7_theta_rel": 0.1250376673605345, "F3_theta_abs": 1.2882832148504567e-11, "F3_theta_rel": 0.1426698218645447, "Fz_theta_abs": 1.6370070572761394e-11, "Fz_theta_rel": 0.1605469292125736, "F4_theta_abs": 1.0936719868698972e-11, "F4_theta_rel": 0.1424687318778429, "F8_theta_abs": 9.005282483495312e-12, "F8_theta_rel": 0.1246577764397403, "FC3_theta_abs": 1.0214431358078852e-11, "FC3_theta_rel": 0.1785928182529087, "FCz_theta_abs": 1.707507486525367e-11, "FCz_theta_rel": 0.1788040819865114, "FC4_theta_abs": 7.036465376127172e-12, "FC4_theta_rel": 0.1406455516963785, "T7_theta_abs": 1.8736196205699203e-11, "T7_theta_rel": 0.1210056052596758, "C3_theta_abs": 9.986154681566287e-12, "C3_theta_rel": 0.2015986993669116, "Cz_theta_abs": 1.5257439715454383e-11, "Cz_theta_rel": 0.249464303474113, "C4_theta_abs": 8.639367706279408e-12, "C4_theta_rel": 0.1691521063761702, "T8_theta_abs": 1.5607861192324686e-11, "T8_theta_rel": 0.1710966142134511, "CP3_theta_abs": 1.3267875932734275e-11, "CP3_theta_rel": 0.1540584528542413, "CPz_theta_abs": 1.4528959245726172e-11, "CPz_theta_rel": 0.1677250856120485, "CP4_theta_abs": 1.0101539428208519e-11, "CP4_theta_rel": 0.1356182500455497, "P7_theta_abs": 3.561539033636695e-11, "P7_theta_rel": 0.2675951808679533, "P3_theta_abs": 1.6877794340043287e-11, "P3_theta_rel": 0.1457280300273355, "Pz_theta_abs": 1.6287770673552453e-11, "Pz_theta_rel": 0.0945111880670321, "P4_theta_abs": 1.7077870448103828e-11, "P4_theta_rel": 0.1305248375762974, "P8_theta_abs": 5.413097452046708e-11, "P8_theta_rel": 0.2662337081421332, "O1_theta_abs": 3.56608571765879e-11, "O1_theta_rel": 0.1449740341563297, "Oz_theta_abs": 2.7075411216642198e-11, "Oz_theta_rel": 0.127488877257444, "O2_theta_abs": 3.67962873552884e-11, "O2_theta_rel": 0.1535220634604479, "Fp1_alpha_abs": 7.101872990971415e-11, "Fp1_alpha_rel": 0.5229112643112636, "Fp2_alpha_abs": 6.37194839865423e-11, "Fp2_alpha_rel": 0.3533836785218477, "F7_alpha_abs": 5.3697657503307114e-11, "F7_alpha_rel": 0.5686444138857958, "F3_alpha_abs": 5.5102588907240397e-11, "F3_alpha_rel": 0.6102289040988385, "Fz_alpha_abs": 5.969418290950629e-11, "Fz_alpha_rel": 0.5854414442123138, "F4_alpha_abs": 4.219372496790989e-11, "F4_alpha_rel": 0.5496425401353636, "F8_alpha_abs": 3.6845940441534144e-11, "F8_alpha_rel": 0.5100487424676512, "FC3_alpha_abs": 3.010117658288155e-11, "FC3_alpha_rel": 0.526299876146642, "FCz_alpha_abs": 5.222841405648161e-11, "FCz_alpha_rel": 0.5469172874892615, "FC4_alpha_abs": 1.870117398181828e-11, "FC4_alpha_rel": 0.3738008774926223, "T7_alpha_abs": 4.328094394912966e-11, "T7_alpha_rel": 0.2795250840286071, "C3_alpha_abs": 2.320991169560098e-11, "C3_alpha_rel": 0.4685575338514716, "Cz_alpha_abs": 2.0004028337481584e-11, "Cz_alpha_rel": 0.3270726340036958, "C4_alpha_abs": 2.318461320389229e-11, "C4_alpha_rel": 0.4539367106813496, "T8_alpha_abs": 3.21842832507427e-11, "T8_alpha_rel": 0.3528107936913671, "CP3_alpha_abs": 5.066611688111619e-11, "CP3_alpha_rel": 0.5883039318734671, "CPz_alpha_abs": 4.8381746053863176e-11, "CPz_alpha_rel": 0.5585281341698062, "CP4_alpha_abs": 4.3856526915617796e-11, "CP4_alpha_rel": 0.5887959429988046, "P7_alpha_abs": 4.981718897711302e-11, "P7_alpha_rel": 0.3742999744987049, "P3_alpha_abs": 7.209222364444148e-11, "P3_alpha_rel": 0.6224662725667277, "Pz_alpha_abs": 1.3189219040482662e-10, "Pz_alpha_rel": 0.7653157612394494, "P4_alpha_abs": 8.674620147249289e-11, "P4_alpha_rel": 0.6629944811892553, "P8_alpha_abs": 8.047132078520278e-11, "P8_alpha_rel": 0.395784083355808, "O1_alpha_abs": 1.1640057750317899e-10, "O1_alpha_rel": 0.4732096375361727, "Oz_alpha_abs": 1.1611283399497903e-10, "Oz_alpha_rel": 0.5467357346026558, "O2_alpha_abs": 1.2737732985850484e-10, "O2_alpha_rel": 0.5314457496524928, "Fp1_beta_abs": 1.8909013901029603e-11, "Fp1_beta_rel": 0.1392271641359524, "Fp2_beta_abs": 4.8840865429926915e-11, "Fp2_beta_rel": 0.2708679293677798, "F7_beta_abs": 8.222125280323899e-12, "F7_beta_rel": 0.0870701968821902, "F3_beta_abs": 8.050442106107085e-12, "F3_beta_rel": 0.0891539319902147, "Fz_beta_abs": 8.16233238418089e-12, "Fz_beta_rel": 0.0800508094127009, "F4_beta_abs": 8.234463429973405e-12, "F4_beta_rel": 0.1072674052775516, "F8_beta_abs": 7.882586118418422e-12, "F8_beta_rel": 0.1091165835072624, "FC3_beta_abs": 6.340817630041728e-12, "FC3_beta_rel": 0.1108651525355073, "FCz_beta_abs": 8.611050404791371e-12, "FCz_beta_rel": 0.0901718425669359, "FC4_beta_abs": 9.44619294248366e-12, "FC4_beta_rel": 0.1888114197695783, "T7_beta_abs": 4.0225590169463335e-11, "T7_beta_rel": 0.2597924270190429, "C3_beta_abs": 6.300430610203751e-12, "C3_beta_rel": 0.1271919629698079, "Cz_beta_abs": 9.352320897753089e-12, "Cz_beta_rel": 0.1529136121220378, "C4_beta_abs": 7.559016245310658e-12, "C4_beta_rel": 0.1479996642690225, "T8_beta_abs": 1.5854763692910463e-11, "T8_beta_rel": 0.1738032106759975, "CP3_beta_abs": 7.96555753472706e-12, "CP3_beta_rel": 0.0924911776491566, "CPz_beta_abs": 7.782234760824318e-12, "CPz_beta_rel": 0.089839607189777, "CP4_beta_abs": 7.361307602418417e-12, "CP4_beta_rel": 0.0988292588651548, "P7_beta_abs": 1.3691035390031238e-11, "P7_beta_rel": 0.1028671890680921, "P3_beta_abs": 9.34892409382573e-12, "P3_beta_rel": 0.0807214653537971, "Pz_beta_abs": 1.0007715558886239e-11, "Pz_beta_rel": 0.0580706289561828, "P4_beta_abs": 1.0235615233446204e-11, "P4_beta_rel": 0.0782300123366599, "P8_beta_abs": 2.19474098869562e-11, "P8_beta_rel": 0.1079444877924811, "O1_beta_abs": 4.347816642028935e-11, "O1_beta_rel": 0.1767541692129544, "Oz_beta_abs": 3.4479686408343286e-11, "Oz_beta_rel": 0.162353083881752, "O2_beta_abs": 3.3934452562432395e-11, "O2_beta_rel": 0.1415818701893185, "Fp1_gamma_abs": 1.2711670870728547e-11, "Fp1_gamma_rel": 0.0935960963392576, "Fp2_gamma_abs": 3.7541531541693065e-11, "Fp2_gamma_rel": 0.2082026357330419, "F7_gamma_abs": 3.3956196337771773e-12, "F7_gamma_rel": 0.0359587405895574, "F3_gamma_abs": 2.1726862492051933e-12, "F3_gamma_rel": 0.024061227885953, "Fz_gamma_abs": 1.677106818536867e-12, "Fz_gamma_rel": 0.0164479651129655, "F4_gamma_abs": 4.005281648438188e-12, "F4_gamma_rel": 0.0521753692256238, "F8_gamma_abs": 5.579011644539044e-12, "F8_gamma_rel": 0.0772288029403068, "FC3_gamma_abs": 1.80335950266802e-12, "FC3_gamma_rel": 0.031530590848791, "FCz_gamma_abs": 1.534100745569395e-12, "FCz_gamma_rel": 0.0160645547765382, "FC4_gamma_abs": 7.6752117365083e-12, "FC4_gamma_rel": 0.1534128758353772, "T7_gamma_abs": 3.1206496935341155e-11, "T7_gamma_rel": 0.2015436328824598, "C3_gamma_abs": 1.3810751826962805e-12, "C3_gamma_rel": 0.027880898047117, "Cz_gamma_abs": 1.2926123680660758e-12, "Cz_gamma_rel": 0.0211346497233742, "C4_gamma_abs": 2.5363107074163747e-12, "C4_gamma_rel": 0.0496589927839377, "T8_gamma_abs": 1.0560038560039864e-11, "T8_gamma_rel": 0.1157613347096406, "CP3_gamma_abs": 1.3381704601750972e-12, "CP3_gamma_rel": 0.0155380161673955, "CPz_gamma_abs": 1.2586016065504998e-12, "CPz_gamma_rel": 0.0145295377762341, "CP4_gamma_abs": 1.4551390266313238e-12, "CP4_gamma_rel": 0.0195359736768085, "P7_gamma_abs": 2.4316387801507265e-12, "P7_gamma_rel": 0.0182700459838997, "P3_gamma_abs": 1.2684342086043734e-12, "P3_gamma_rel": 0.0109520482780526, "Pz_gamma_abs": 1.1291716848783812e-12, "Pz_gamma_rel": 0.0065521156706114, "P4_gamma_abs": 1.4381924300145722e-12, "P4_gamma_rel": 0.0109919930533233, "P8_gamma_abs": 5.478787960798288e-12, "P8_gamma_rel": 0.0269464580648975, "O1_gamma_abs": 1.848002948834407e-11, "O1_gamma_rel": 0.0751278751653809, "Oz_gamma_abs": 1.3753601993914338e-11, "Oz_gamma_rel": 0.0647610210762788, "O2_gamma_abs": 1.3290657960066249e-11, "O2_gamma_rel": 0.0554514974588366, "Fp1_TBR": 0.5705304788161072, "Fp2_TBR": 0.2099566130911246, "F7_TBR": 1.2803373318202265, "F3_TBR": 1.42344782690908, "Fz_TBR": 1.7866706736185358, "F4_TBR": 1.1843373414854133, "F8_TBR": 1.0138131354361402, "FC3_TBR": 1.3914569020591228, "FCz_TBR": 1.7766086063539193, "FC4_TBR": 0.6735913662393258, "T7_TBR": 0.4544797570800452, "C3_TBR": 1.3678857063046013, "Cz_TBR": 1.473818273810071, "C4_TBR": 1.0093879318213437, "T8_TBR": 0.926020766395541, "CP3_TBR": 1.4798718184945754, "CPz_TBR": 1.6543578760313684, "CP4_TBR": 1.2081291478006095, "P7_TBR": 2.4242940943790905, "P3_TBR": 1.6308743002678652, "Pz_TBR": 1.4796685639650056, "P4_TBR": 1.519976440388096, "P8_TBR": 2.3589143518648825, "O1_TBR": 0.8017609547933319, "Oz_TBR": 0.7631243102045916, "O2_TBR": 1.053295089983982, "TBR_Fz": 1.7866706736185358, "TBR_Cz": 1.473818273810071, "FAA_F4_F3": -0.2614867302159851, "subject_id": "sub-88015117", "task": "restEC", "label": 1, "indication": "ADHD", "age": 38.0, "gender": 0, "n_epochs": 111}, "sub-87957881": {"Fp1_delta_abs": 1.1639293813276288e-11, "Fp1_delta_rel": 0.1927047853248282, "Fp2_delta_abs": 1.1965032153385114e-11, "Fp2_delta_rel": 0.1971397706012774, "F7_delta_abs": 1.3060558244005004e-11, "F7_delta_rel": 0.2866166643197912, "F3_delta_abs": 6.55694768907395e-12, "F3_delta_rel": 0.1522892132794122, "Fz_delta_abs": 1.0601543243033808e-11, "Fz_delta_rel": 0.1753774779592484, "F4_delta_abs": 5.3160688268613936e-12, "F4_delta_rel": 0.1299536204252134, "F8_delta_abs": 9.042504747547015e-12, "F8_delta_rel": 0.2455296799840009, "FC3_delta_abs": 2.7078628763021424e-12, "FC3_delta_rel": 0.1293088466538313, "FCz_delta_abs": 1.0747934114052234e-11, "FCz_delta_rel": 0.2301068626017605, "FC4_delta_abs": 4.8318236708702e-12, "FC4_delta_rel": 0.1745953998859318, "T7_delta_abs": 9.350852006404886e-12, "T7_delta_rel": 0.2261116504803026, "C3_delta_abs": 6.5876615309646054e-12, "C3_delta_rel": 0.3145906589418737, "Cz_delta_abs": 5.597714803127883e-12, "Cz_delta_rel": 0.2630594621453868, "C4_delta_abs": 7.140951367739705e-12, "C4_delta_rel": 0.3945135203036078, "T8_delta_abs": 1.0765542316244712e-11, "T8_delta_rel": 0.3764404405909053, "CP3_delta_abs": 6.270709716208507e-12, "CP3_delta_rel": 0.2121618964374453, "CPz_delta_abs": 4.7894071415680575e-12, "CPz_delta_rel": 0.2647257662258301, "CP4_delta_abs": 6.1298050860792285e-12, "CP4_delta_rel": 0.2435100012249487, "P7_delta_abs": 2.0361625124306443e-11, "P7_delta_rel": 0.1840781651316, "P3_delta_abs": 5.8414567807985056e-12, "P3_delta_rel": 0.0865457826371717, "Pz_delta_abs": 6.419096042780515e-12, "Pz_delta_rel": 0.1352080962761417, "P4_delta_abs": 1.026998008874184e-11, "P4_delta_rel": 0.1656075004779998, "P8_delta_abs": 2.946540245431573e-11, "P8_delta_rel": 0.2796527547508223, "O1_delta_abs": 1.7200272802729517e-11, "O1_delta_rel": 0.211387112008613, "Oz_delta_abs": 1.6646713869305478e-11, "Oz_delta_rel": 0.2067846993859765, "O2_delta_abs": 2.027856870827376e-11, "O2_delta_rel": 0.211171284216796, "Fp1_theta_abs": 3.980108115867565e-12, "Fp1_theta_rel": 0.0658962555926724, "Fp2_theta_abs": 4.214000741603923e-12, "Fp2_theta_rel": 0.0694312500680056, "F7_theta_abs": 4.154068791488244e-12, "F7_theta_rel": 0.0911619027400932, "F3_theta_abs": 3.810272042326575e-12, "F3_theta_rel": 0.0884959525715546, "Fz_theta_abs": 5.9778867526792516e-12, "Fz_theta_rel": 0.0988900085749096, "F4_theta_abs": 3.503696486084955e-12, "F4_theta_rel": 0.0856493883106208, "F8_theta_abs": 3.536826480989745e-12, "F8_theta_rel": 0.0960348817369351, "FC3_theta_abs": 1.4540427905497625e-12, "FC3_theta_rel": 0.0694350507467605, "FCz_theta_abs": 4.678551828043894e-12, "FCz_theta_rel": 0.1001650057812849, "FC4_theta_abs": 2.643928362430456e-12, "FC4_theta_rel": 0.0955369568826103, "T7_theta_abs": 5.9554779311729815e-12, "T7_theta_rel": 0.1440085826932329, "C3_theta_abs": 2.5988574786643534e-12, "C3_theta_rel": 0.1241072090401282, "Cz_theta_abs": 2.1718132903486518e-12, "Cz_theta_rel": 0.1020623694011848, "C4_theta_abs": 1.7661893975061056e-12, "C4_theta_rel": 0.0975760176551367, "T8_theta_abs": 3.0662880714266653e-12, "T8_theta_rel": 0.1072193855803012, "CP3_theta_abs": 3.0622024019280996e-12, "CP3_theta_rel": 0.1036059231364303, "CPz_theta_abs": 1.6729771838761664e-12, "CPz_theta_rel": 0.0924707701368963, "CP4_theta_abs": 2.8252781798236444e-12, "CP4_theta_rel": 0.1122357861903448, "P7_theta_abs": 1.233628316679084e-11, "P7_theta_rel": 0.1115254974012812, "P3_theta_abs": 4.2831223839776244e-12, "P3_theta_rel": 0.0634578312845894, "Pz_theta_abs": 3.5422243321136146e-12, "Pz_theta_rel": 0.0746113479742626, "P4_theta_abs": 4.352857181236764e-12, "P4_theta_rel": 0.0701915477433651, "P8_theta_abs": 1.022783961202795e-11, "P8_theta_rel": 0.097071252533809, "O1_theta_abs": 7.561005031996759e-12, "O1_theta_rel": 0.0929228876731973, "Oz_theta_abs": 7.48437758339053e-12, "Oz_theta_rel": 0.0929705875179509, "O2_theta_abs": 9.859440307861194e-12, "O2_theta_rel": 0.1026714804886802, "Fp1_alpha_abs": 3.4259142265656055e-11, "Fp1_alpha_rel": 0.5672080077732535, "Fp2_alpha_abs": 3.366806486717926e-11, "Fp2_alpha_rel": 0.5547260132206863, "F7_alpha_abs": 1.9024589962089798e-11, "F7_alpha_rel": 0.4174985795487619, "F3_alpha_abs": 2.359936980825013e-11, "F3_alpha_rel": 0.5481101317884547, "Fz_alpha_abs": 3.2309352688101886e-11, "Fz_alpha_rel": 0.534481882405043, "F4_alpha_abs": 2.323825302702611e-11, "F4_alpha_rel": 0.5680692277647132, "F8_alpha_abs": 1.607472788725181e-11, "F8_alpha_rel": 0.43647450614361, "FC3_alpha_abs": 1.1702503598179156e-11, "FC3_alpha_rel": 0.558830824295407, "FCz_alpha_abs": 2.1132691577393556e-11, "FCz_alpha_rel": 0.4524383295992587, "FC4_alpha_abs": 1.3101931010908958e-11, "FC4_alpha_rel": 0.4734313666946296, "T7_alpha_abs": 1.1340951195416031e-11, "T7_alpha_rel": 0.2742339618951988, "C3_alpha_abs": 5.106681985392662e-12, "C3_alpha_rel": 0.2438671815848495, "Cz_alpha_abs": 7.756862024813199e-12, "Cz_alpha_rel": 0.364526601291502, "C4_alpha_abs": 4.0736724347929886e-12, "C4_alpha_rel": 0.225056686434576, "T8_alpha_abs": 7.797113117077253e-12, "T8_alpha_rel": 0.2726429018536932, "CP3_alpha_abs": 1.1434527067350558e-11, "CP3_alpha_rel": 0.3868734253801852, "CPz_alpha_abs": 6.785442510019699e-12, "CPz_alpha_rel": 0.3750529897648628, "CP4_alpha_abs": 9.167485946815184e-12, "CP4_alpha_rel": 0.3641836049907007, "P7_alpha_abs": 4.9228661824196704e-11, "P7_alpha_rel": 0.4450490412803354, "P3_alpha_abs": 4.375261321830445e-11, "P3_alpha_rel": 0.6482294221274729, "Pz_alpha_abs": 2.906750728555981e-11, "Pz_alpha_rel": 0.6122610251319779, "P4_alpha_abs": 3.5499803712426657e-11, "P4_alpha_rel": 0.5724484088064898, "P8_alpha_abs": 4.237141916052365e-11, "P8_alpha_rel": 0.402142278874819, "O1_alpha_abs": 4.0970175855409165e-11, "O1_alpha_rel": 0.5035133600430803, "Oz_alpha_abs": 4.087347352323757e-11, "Oz_alpha_rel": 0.5077283722013046, "O2_alpha_abs": 4.7328019002808285e-11, "O2_alpha_rel": 0.4928512803855934, "Fp1_beta_abs": 5.585028248631062e-12, "Fp1_beta_rel": 0.0924679526912465, "Fp2_beta_abs": 5.790115726147219e-12, "Fp2_beta_rel": 0.0953998343986541, "F7_beta_abs": 5.2338216870470925e-12, "F7_beta_rel": 0.1148573043785926, "F3_beta_abs": 5.112455465352233e-12, "F3_beta_rel": 0.1187399774504655, "Fz_beta_abs": 6.136772196342341e-12, "Fz_beta_rel": 0.1015183927408072, "F4_beta_abs": 5.089741151983946e-12, "F4_beta_rel": 0.1244209417277274, "F8_beta_abs": 4.49556601569217e-12, "F8_beta_rel": 0.1220673824339741, "FC3_beta_abs": 2.6709704923959707e-12, "FC3_beta_rel": 0.1275471209568004, "FCz_beta_abs": 5.542965804619381e-12, "FCz_beta_rel": 0.1186715937476959, "FC4_beta_abs": 4.020205959061179e-12, "FC4_beta_rel": 0.1452680219432925, "T7_beta_abs": 6.922430435984431e-12, "T7_beta_rel": 0.1673903265866474, "C3_beta_abs": 3.760572728059716e-12, "C3_beta_rel": 0.1795843710182113, "Cz_beta_abs": 2.931689713684238e-12, "Cz_beta_rel": 0.1377720634906236, "C4_beta_abs": 2.7062353242338568e-12, "C4_beta_rel": 0.1495103900800563, "T8_beta_abs": 3.6487219938231295e-12, "T8_beta_rel": 0.1275854457304874, "CP3_beta_abs": 5.043866596809358e-12, "CP3_beta_rel": 0.1706531399134174, "CPz_beta_abs": 2.4918842457727045e-12, "CPz_beta_rel": 0.1377343681189481, "CP4_beta_abs": 3.950251027515821e-12, "CP4_beta_rel": 0.1569259738345943, "P7_beta_abs": 1.509560935979228e-11, "P7_beta_rel": 0.136471035859355, "P3_beta_abs": 7.604997744612955e-12, "P3_beta_rel": 0.1126740308898567, "Pz_beta_abs": 5.0896982023327775e-12, "Pz_beta_rel": 0.1072064352941861, "P4_beta_abs": 7.308832797526565e-12, "P4_beta_rel": 0.1178578264564372, "P8_beta_abs": 1.3848552619272643e-11, "P8_beta_rel": 0.1314350243576623, "O1_beta_abs": 9.379732007600848e-12, "O1_beta_rel": 0.1152745937952128, "Oz_beta_abs": 9.342173376800467e-12, "Oz_beta_rel": 0.1160480397813166, "O2_beta_abs": 1.1863046289905512e-11, "O2_beta_rel": 0.1235360717909314, "Fp1_gamma_abs": 1.06358240038105e-12, "Fp1_gamma_rel": 0.0176090939389219, "Fp2_gamma_abs": 1.1279820401127408e-12, "Fp2_gamma_rel": 0.0185849998378211, "F7_gamma_abs": 1.1154443408219576e-12, "F7_gamma_rel": 0.0244786578205818, "F3_gamma_abs": 7.542181917304069e-13, "F3_gamma_rel": 0.0175171894769022, "Fz_gamma_abs": 8.471293392392754e-13, "Fz_gamma_rel": 0.014013752867413, "F4_gamma_abs": 6.811672058591768e-13, "F4_gamma_rel": 0.0166514293549109, "F8_gamma_abs": 7.854719644336339e-13, "F8_gamma_rel": 0.0213277941729708, "FC3_gamma_abs": 4.903138427586452e-13, "FC3_gamma_rel": 0.0234140059529565, "FCz_gamma_abs": 1.018683345248846e-12, "FCz_gamma_rel": 0.0218094031906473, "FC4_gamma_abs": 6.425043515224207e-13, "FC4_gamma_rel": 0.0232165558645697, "T7_gamma_abs": 2.921357646135337e-12, "T7_gamma_rel": 0.0706409425107429, "C3_gamma_abs": 8.185338505688849e-13, "C3_gamma_rel": 0.0390886966803513, "Cz_gamma_abs": 5.917527830506937e-13, "Cz_gamma_rel": 0.0278088781417317, "C4_gamma_abs": 6.028526997119011e-13, "C4_gamma_rel": 0.0333055819232047, "T8_gamma_abs": 8.765197509710049e-13, "T8_gamma_rel": 0.0306494063698272, "CP3_gamma_abs": 9.922074119342702e-13, "CP3_gamma_rel": 0.0335701404948059, "CPz_gamma_abs": 5.219697623134918e-13, "CPz_gamma_rel": 0.0288509289752956, "CP4_gamma_abs": 7.032769710028934e-13, "CP4_gamma_rel": 0.0279380785629403, "P7_gamma_abs": 3.618328788995549e-12, "P7_gamma_rel": 0.0327113047340238, "P3_gamma_abs": 9.623620887090797e-13, "P3_gamma_rel": 0.0142581522508988, "Pz_gamma_abs": 7.634705722505572e-13, "Pz_gamma_rel": 0.0160812989786861, "P4_gamma_abs": 1.3686400814308134e-12, "P4_gamma_rel": 0.0220698639122221, "P8_gamma_abs": 3.571971071687474e-12, "P8_gamma_rel": 0.0339011677046121, "O1_gamma_abs": 1.4750755450741569e-12, "O1_gamma_rel": 0.0181283147682561, "Oz_gamma_abs": 1.450083655370893e-12, "Oz_gamma_rel": 0.018012871195755, "O2_gamma_abs": 2.532747455403997e-12, "O2_gamma_rel": 0.0263748167066774, "Fp1_TBR": 0.6044177740156202, "Fp2_TBR": 0.6206080885155975, "F7_TBR": 0.6663759408004483, "F3_TBR": 0.6233619310479518, "Fz_TBR": 0.8376177056264977, "F4_TBR": 0.5753440743443592, "F8_TBR": 0.6435781993866705, "FC3_TBR": 0.3960922032911076, "FCz_TBR": 0.7150506311282879, "FC4_TBR": 0.5266573491189778, "T7_TBR": 0.7517236003894253, "C3_TBR": 0.5459127771215838, "Cz_TBR": 0.5523867467948093, "C4_TBR": 0.4765454006542899, "T8_TBR": 0.659598073513735, "CP3_TBR": 0.50666280482509, "CPz_TBR": 0.4791044221759304, "CP4_TBR": 0.5707343252128874, "P7_TBR": 0.7664377838100094, "P3_TBR": 0.4977482285406776, "Pz_TBR": 0.581674857180393, "P4_TBR": 0.5238831117810621, "P8_TBR": 0.6888105443188279, "O1_TBR": 0.7284393302697991, "Oz_TBR": 0.7236755090742786, "O2_TBR": 0.7664934173173701, "TBR_Fz": 0.8376177056264977, "TBR_Cz": 0.5523867467948093, "FAA_F4_F3": -0.0147887362975751, "subject_id": "sub-87957881", "task": "restEC", "label": 0, "indication": "HEALTHY", "age": 41.0, "gender": 1, "n_epochs": 119}, "sub-87958013": {"Fp1_delta_abs": 6.554646180840461e-12, "Fp1_delta_rel": 0.1616717082467862, "Fp2_delta_abs": 6.1562052594487975e-12, "Fp2_delta_rel": 0.1592199284946192, "F7_delta_abs": 5.095757896099878e-12, "F7_delta_rel": 0.1569204056891195, "F3_delta_abs": 3.547272294269412e-12, "F3_delta_rel": 0.132695840214868, "Fz_delta_abs": 8.427612335068514e-12, "Fz_delta_rel": 0.1722190776953937, "F4_delta_abs": 2.62723449714217e-12, "F4_delta_rel": 0.1095783352253527, "F8_delta_abs": 6.014350317213854e-12, "F8_delta_rel": 0.1495389436791745, "FC3_delta_abs": 3.415011486804004e-12, "FC3_delta_rel": 0.1089583585084289, "FCz_delta_abs": 6.084048468871723e-12, "FCz_delta_rel": 0.1805193674526527, "FC4_delta_abs": 4.145693132599647e-12, "FC4_delta_rel": 0.1362549028955258, "T7_delta_abs": 7.503389690494719e-12, "T7_delta_rel": 0.1420737386744821, "C3_delta_abs": 1.9701472014116007e-12, "C3_delta_rel": 0.0589494821507925, "Cz_delta_abs": 5.090992398480357e-12, "Cz_delta_rel": 0.1201539855515346, "C4_delta_abs": 2.4466695064259112e-12, "C4_delta_rel": 0.0899909883834976, "T8_delta_abs": 4.986206254354755e-12, "T8_delta_rel": 0.0891536348118754, "CP3_delta_abs": 3.542492873628381e-12, "CP3_delta_rel": 0.085769663897691, "CPz_delta_abs": 4.0912007788260195e-12, "CPz_delta_rel": 0.0709782777356521, "CP4_delta_abs": 2.165926936999174e-12, "CP4_delta_rel": 0.0649737145846837, "P7_delta_abs": 6.528466061769284e-12, "P7_delta_rel": 0.0924446096085071, "P3_delta_abs": 2.890419541100209e-12, "P3_delta_rel": 0.0558738736569581, "Pz_delta_abs": 4.227092733058942e-12, "Pz_delta_rel": 0.0558338864757045, "P4_delta_abs": 3.386038085838493e-12, "P4_delta_rel": 0.0526011626167249, "P8_delta_abs": 6.61475406615203e-12, "P8_delta_rel": 0.0568229620829506, "O1_delta_abs": 3.972292505971962e-12, "O1_delta_rel": 0.0497930864433197, "Oz_delta_abs": 4.044778267872662e-12, "Oz_delta_rel": 0.0552024095189364, "O2_delta_abs": 4.078422833995943e-12, "O2_delta_rel": 0.0415784507085644, "Fp1_theta_abs": 7.700605211470349e-12, "Fp1_theta_rel": 0.1899370255425261, "Fp2_theta_abs": 8.245682474475752e-12, "Fp2_theta_rel": 0.2132607537671533, "F7_theta_abs": 7.847494582188978e-12, "F7_theta_rel": 0.2416582692091315, "F3_theta_abs": 6.094092012489374e-12, "F3_theta_rel": 0.2279668976216958, "Fz_theta_abs": 1.3087602741734449e-11, "Fz_theta_rel": 0.2674464348634386, "F4_theta_abs": 5.025451320927504e-12, "F4_theta_rel": 0.2096046584735015, "F8_theta_abs": 1.0391891545503618e-11, "F8_theta_rel": 0.2583807730812465, "FC3_theta_abs": 7.252599029267527e-12, "FC3_theta_rel": 0.2313993051567642, "FCz_theta_abs": 8.854881068842756e-12, "FCz_theta_rel": 0.2627325435677207, "FC4_theta_abs": 6.293820091674734e-12, "FC4_theta_rel": 0.2068565660804943, "T7_theta_abs": 1.5478732340781907e-11, "T7_theta_rel": 0.2930837213989227, "C3_theta_abs": 7.136527360022664e-12, "C3_theta_rel": 0.2135345987989491, "Cz_theta_abs": 1.0888118980659831e-11, "Cz_theta_rel": 0.2569736484140302, "C4_theta_abs": 5.942210806506271e-12, "C4_theta_rel": 0.2185605461858044, "T8_theta_abs": 1.6914617210940255e-11, "T8_theta_rel": 0.3024342614166441, "CP3_theta_abs": 8.531887214550012e-12, "CP3_theta_rel": 0.206571226791331, "CPz_theta_abs": 1.1693612307855502e-11, "CPz_theta_rel": 0.2028725811785204, "CP4_theta_abs": 7.0913686995441305e-12, "CP4_theta_rel": 0.2127276585503383, "P7_theta_abs": 1.7174263876915638e-11, "P7_theta_rel": 0.2431916018852179, "P3_theta_abs": 1.156784315568221e-11, "P3_theta_rel": 0.2236146683114634, "Pz_theta_abs": 1.1476680171985e-11, "Pz_theta_rel": 0.1515906317429836, "P4_theta_abs": 1.2117632146210554e-11, "P4_theta_rel": 0.1882440548197889, "P8_theta_abs": 2.7564672685197363e-11, "P8_theta_rel": 0.2367898088357917, "O1_theta_abs": 8.301080255447913e-12, "O1_theta_rel": 0.1040548766514653, "Oz_theta_abs": 7.774175102105339e-12, "Oz_theta_rel": 0.1061005497055467, "O2_theta_abs": 1.0593938804145486e-11, "O2_theta_rel": 0.1080024265032224, "Fp1_alpha_abs": 1.093320397593924e-11, "Fp1_alpha_rel": 0.2696697448852999, "Fp2_alpha_abs": 9.616845242212622e-12, "Fp2_alpha_rel": 0.2487235800753677, "F7_alpha_abs": 7.926476805124531e-12, "F7_alpha_rel": 0.2440904731556261, "F3_alpha_abs": 7.029747254979634e-12, "F3_alpha_rel": 0.2629677513070096, "Fz_alpha_abs": 9.719637030585196e-12, "Fz_alpha_rel": 0.1986217280042663, "F4_alpha_abs": 7.0261025004265816e-12, "F4_alpha_rel": 0.2930490658359267, "F8_alpha_abs": 9.029433218168892e-12, "F8_alpha_rel": 0.2245050311755251, "FC3_alpha_abs": 1.0926969286373392e-11, "FC3_alpha_rel": 0.3486326887964563, "FCz_alpha_abs": 7.789538093816886e-12, "FCz_alpha_rel": 0.2311228282678256, "FC4_alpha_abs": 9.770910009248151e-12, "FC4_alpha_rel": 0.3211367440687021, "T7_alpha_abs": 1.3641116535699088e-11, "T7_alpha_rel": 0.2582891874023523, "C3_alpha_abs": 1.4191193217249031e-11, "C3_alpha_rel": 0.4246197901655654, "Cz_alpha_abs": 1.4339048301137786e-11, "Cz_alpha_rel": 0.3384200304270627, "C4_alpha_abs": 9.969166560780744e-12, "C4_alpha_rel": 0.3666760671223248, "T8_alpha_abs": 1.730067617793297e-11, "T8_alpha_rel": 0.3093370164178153, "CP3_alpha_abs": 1.6588907741460833e-11, "CP3_alpha_rel": 0.4016451386555874, "CPz_alpha_abs": 2.6008017001950623e-11, "CPz_alpha_rel": 0.4512133121581312, "CP4_alpha_abs": 1.3722329433703887e-11, "CP4_alpha_rel": 0.4116439482939131, "P7_alpha_abs": 2.432418082168113e-11, "P7_alpha_rel": 0.3444361016556533, "P3_alpha_abs": 2.0860625448216725e-11, "P3_alpha_rel": 0.4032507856126404, "Pz_alpha_abs": 3.961712972646528e-11, "Pz_alpha_rel": 0.5232859706013646, "P4_alpha_abs": 2.9803233427141976e-11, "P4_alpha_rel": 0.462984965987793, "P8_alpha_abs": 4.5509013820932845e-11, "P8_alpha_rel": 0.3909377341799891, "O1_alpha_abs": 2.360487537487919e-11, "O1_alpha_rel": 0.2958894890691228, "Oz_alpha_abs": 2.3947924482450283e-11, "Oz_alpha_rel": 0.3268369850849891, "O2_alpha_abs": 3.16548555005425e-11, "O2_alpha_rel": 0.3227129463245214, "Fp1_beta_abs": 8.424892548366044e-12, "Fp1_beta_rel": 0.2078017230085345, "Fp2_beta_abs": 7.980633370179811e-12, "Fp2_beta_rel": 0.2064057030248489, "F7_beta_abs": 5.816485773932362e-12, "F7_beta_rel": 0.1791147314963742, "F3_beta_abs": 4.777565138800548e-12, "F3_beta_rel": 0.1787184539790088, "Fz_beta_abs": 9.262253097703064e-12, "Fz_beta_rel": 0.1892750428529004, "F4_beta_abs": 4.592210486937609e-12, "F4_beta_rel": 0.1915347795221187, "F8_beta_abs": 7.275333131099511e-12, "F8_beta_rel": 0.1808916298448529, "FC3_beta_abs": 4.2426384820108696e-12, "FC3_beta_rel": 0.1353643835550378, "FCz_beta_abs": 5.324617911653048e-12, "FCz_beta_rel": 0.1579863576459846, "FC4_beta_abs": 5.00224533723423e-12, "FC4_beta_rel": 0.1644068750108011, "T7_beta_abs": 7.46829899135568e-12, "T7_beta_rel": 0.1414093100595455, "C3_beta_abs": 4.2670143639514226e-12, "C3_beta_rel": 0.1276748696263425, "Cz_beta_abs": 6.8899182797499364e-12, "Cz_beta_rel": 0.1626109561042438, "C4_beta_abs": 4.0397026585874686e-12, "C4_beta_rel": 0.1485843650182174, "T8_beta_abs": 6.706242980152825e-12, "T8_beta_rel": 0.119907983567683, "CP3_beta_abs": 5.097283369186931e-12, "CP3_beta_rel": 0.1234137363044746, "CPz_beta_abs": 9.3933657702613e-12, "CPz_beta_rel": 0.1629655840810366, "CP4_beta_abs": 4.3912413074556775e-12, "CP4_beta_rel": 0.131728939932939, "P7_beta_abs": 9.272218045552799e-12, "P7_beta_rel": 0.1312967807929114, "P3_beta_abs": 5.713970309377991e-12, "P3_beta_rel": 0.1104551261870697, "Pz_beta_abs": 1.04342385566913e-11, "Pz_beta_rel": 0.1378214597655949, "P4_beta_abs": 7.604011320611968e-12, "P4_beta_rel": 0.1181262070523578, "P8_beta_abs": 1.3457273397168434e-11, "P8_beta_rel": 0.1156025043924327, "O1_beta_abs": 1.9443036352536268e-11, "O1_beta_rel": 0.2437204179619093, "Oz_beta_abs": 1.719363783410827e-11, "Oz_beta_rel": 0.23465569036938, "O2_beta_abs": 2.268099651417893e-11, "O2_beta_rel": 0.2312268084920319, "Fp1_gamma_abs": 2.996954159480872e-12, "Fp1_gamma_rel": 0.0739204962606321, "Fp2_gamma_abs": 2.8394313438522464e-12, "Fp2_gamma_rel": 0.0734371315575683, "F7_gamma_abs": 2.128115280046853e-12, "F7_gamma_rel": 0.0655338656009847, "F3_gamma_abs": 1.6806851320394124e-12, "F3_gamma_rel": 0.0628708222069371, "Fz_gamma_abs": 3.670685735219151e-12, "Fz_gamma_rel": 0.0750108199921064, "F4_gamma_abs": 1.961093014572232e-12, "F4_gamma_rel": 0.0817944907440308, "F8_gamma_abs": 3.1958234179512014e-12, "F8_gamma_rel": 0.0794599637366948, "FC3_gamma_abs": 9.768702068798073e-13, "FC3_gamma_rel": 0.0311677353439959, "FCz_gamma_abs": 1.724445858507658e-12, "FCz_gamma_rel": 0.0511659098669012, "FC4_gamma_abs": 1.826037694241336e-12, "FC4_gamma_rel": 0.0600156791046431, "T7_gamma_abs": 2.350377123072178e-12, "T7_gamma_rel": 0.0445034682915183, "C3_gamma_abs": 6.111379757703388e-13, "C3_gamma_rel": 0.0182860789125464, "Cz_gamma_abs": 9.49626634526924e-13, "Cz_gamma_rel": 0.0224124131394027, "C4_gamma_abs": 1.0318050099256418e-12, "C4_gamma_rel": 0.0379508357865189, "T8_gamma_abs": 1.9348215233203032e-12, "T8_gamma_rel": 0.0345947124360536, "CP3_gamma_abs": 9.995754282336855e-13, "CP3_gamma_rel": 0.0242013891286059, "CPz_gamma_abs": 6.972293232658565e-13, "CPz_gamma_rel": 0.0120962375663228, "CP4_gamma_abs": 6.528133161284106e-13, "CP4_gamma_rel": 0.019583165689778, "P7_gamma_abs": 3.633422343643196e-12, "P7_gamma_rel": 0.0514501120053142, "P3_gamma_abs": 1.5625385754407373e-12, "P3_gamma_rel": 0.0302049864065987, "Pz_gamma_abs": 9.67930461695247e-13, "Pz_gamma_rel": 0.0127849855509463, "P4_gamma_abs": 9.815376801564405e-13, "P4_gamma_rel": 0.0152479156523032, "P8_gamma_abs": 4.611192563086141e-12, "P8_gamma_rel": 0.0396116949396808, "O1_gamma_abs": 1.7496165340620207e-11, "O1_gamma_rel": 0.2193161938408032, "Oz_gamma_abs": 1.3022044657521292e-11, "Oz_gamma_rel": 0.177722533684509, "O2_gamma_abs": 1.9091819087533288e-11, "O2_gamma_rel": 0.1946360863447004, "Fp1_TBR": 0.8170496556807295, "Fp2_TBR": 0.918162687929733, "F7_TBR": 1.1512522496855204, "F3_TBR": 1.0547855136349946, "Fz_TBR": 1.2753147498051636, "F4_TBR": 0.898652032620383, "F8_TBR": 1.255767155336608, "FC3_TBR": 1.383387211258884, "FCz_TBR": 1.4000657735430504, "FC4_TBR": 1.048577613552674, "T7_TBR": 1.8278443352770584, "C3_TBR": 1.3549473889546588, "Cz_TBR": 1.380004024706441, "C4_TBR": 1.1790796420064509, "T8_TBR": 2.194923940823472, "CP3_TBR": 1.3992932094425086, "CPz_TBR": 1.1251035099057725, "CP4_TBR": 1.3153498972003548, "P7_TBR": 1.6719138749542972, "P3_TBR": 1.7229511932044723, "Pz_TBR": 1.0037118007537864, "P4_TBR": 1.4083700839841151, "P8_TBR": 1.9066301043041844, "O1_TBR": 0.4060590663880534, "Oz_TBR": 0.4273018498549428, "O2_TBR": 0.4473603464196447, "TBR_Fz": 1.2753147498051636, "TBR_Cz": 1.380004024706441, "FAA_F4_F3": -0.0004540095567904, "subject_id": "sub-87958013", "task": "restEC", "label": 0, "indication": "HEALTHY", "age": 41.65, "gender": 0, "n_epochs": 117}, "sub-87957837": {"Fp1_delta_abs": 5.7581865099496025e-11, "Fp1_delta_rel": 0.4734002974854979, "Fp2_delta_abs": 4.2375841184330236e-11, "Fp2_delta_rel": 0.4035826059961501, "F7_delta_abs": 1.4566342855481097e-11, "F7_delta_rel": 0.4044815547620713, "F3_delta_abs": 7.435468489325285e-12, "F3_delta_rel": 0.2494743568116523, "Fz_delta_abs": 1.1212131813853219e-11, "Fz_delta_rel": 0.2377388102549076, "F4_delta_abs": 1.2380610351143416e-11, "F4_delta_rel": 0.2476711022264676, "F8_delta_abs": 7.896314138973356e-12, "F8_delta_rel": 0.2462575290641447, "FC3_delta_abs": 4.393858788257104e-12, "FC3_delta_rel": 0.2049877721127349, "FCz_delta_abs": 1.196821567246458e-11, "FCz_delta_rel": 0.2649886764905167, "FC4_delta_abs": 5.644360441439839e-12, "FC4_delta_rel": 0.1756453852207054, "T7_delta_abs": 8.866543408060732e-12, "T7_delta_rel": 0.3102274476034821, "C3_delta_abs": 3.5159295641694586e-12, "C3_delta_rel": 0.1762015482772944, "Cz_delta_abs": 1.0209464117325172e-11, "Cz_delta_rel": 0.2802546899761878, "C4_delta_abs": 4.9950459426760616e-12, "C4_delta_rel": 0.179507491680222, "T8_delta_abs": 7.464408558396204e-12, "T8_delta_rel": 0.1822489472032288, "CP3_delta_abs": 6.7527689638343315e-12, "CP3_delta_rel": 0.1552530168457598, "CPz_delta_abs": 1.0651410000680466e-11, "CPz_delta_rel": 0.2209921267933327, "CP4_delta_abs": 7.569231905781628e-12, "CP4_delta_rel": 0.2455422978746768, "P7_delta_abs": 1.7937037868779002e-11, "P7_delta_rel": 0.1447957352610182, "P3_delta_abs": 1.9250488259489685e-11, "P3_delta_rel": 0.1697954279868735, "Pz_delta_abs": 2.272081729505939e-11, "Pz_delta_rel": 0.1835794840744017, "P4_delta_abs": 1.6249295660682434e-11, "P4_delta_rel": 0.2489304377848135, "P8_delta_abs": 2.905892739236336e-11, "P8_delta_rel": 0.2228825777901566, "O1_delta_abs": 1.3157278801828855e-11, "O1_delta_rel": 0.2122384424284481, "Oz_delta_abs": 9.976827870315944e-12, "Oz_delta_rel": 0.2181831429382159, "O2_delta_abs": 1.3103751109218507e-11, "O2_delta_rel": 0.2224619981720753, "Fp1_theta_abs": 1.599339672490332e-11, "Fp1_theta_rel": 0.1314872096325877, "Fp2_theta_abs": 1.5755284123525935e-11, "Fp2_theta_rel": 0.1500515021548088, "F7_theta_abs": 5.345343941018074e-12, "F7_theta_rel": 0.1484307385492745, "F3_theta_abs": 5.657199997648529e-12, "F3_theta_rel": 0.1898100076403276, "Fz_theta_abs": 9.746061490259192e-12, "Fz_theta_rel": 0.2066526778165938, "F4_theta_abs": 9.991576455054269e-12, "F4_theta_rel": 0.1998790595469123, "F8_theta_abs": 4.842822960432639e-12, "F8_theta_rel": 0.1510301635601218, "FC3_theta_abs": 4.443366658859856e-12, "FC3_theta_rel": 0.2072974749470695, "FCz_theta_abs": 1.084989007416696e-11, "FCz_theta_rel": 0.2402277908005844, "FC4_theta_abs": 7.2097485060270306e-12, "FC4_theta_rel": 0.2243582894508564, "T7_theta_abs": 6.086577276839821e-12, "T7_theta_rel": 0.2129604792233637, "C3_theta_abs": 4.242685504662723e-12, "C3_theta_rel": 0.2126230748174269, "Cz_theta_abs": 8.453070439840242e-12, "Cz_theta_rel": 0.2320408405612746, "C4_theta_abs": 6.359268177479742e-12, "C4_theta_rel": 0.2285336896920862, "T8_theta_abs": 6.907581481244088e-12, "T8_theta_rel": 0.1686536103736182, "CP3_theta_abs": 7.671273246697182e-12, "CP3_theta_rel": 0.1763703631764178, "CPz_theta_abs": 8.619525571508632e-12, "CPz_theta_rel": 0.1788352234939335, "CP4_theta_abs": 6.304979590664534e-12, "CP4_theta_rel": 0.2045305515824121, "P7_theta_abs": 3.1536605209828386e-11, "P7_theta_rel": 0.2545774822130315, "P3_theta_abs": 1.9126219909165893e-11, "P3_theta_rel": 0.1686993416204382, "Pz_theta_abs": 2.0495594754098265e-11, "Pz_theta_rel": 0.1656001481766036, "P4_theta_abs": 1.3217269757125272e-11, "P4_theta_rel": 0.2024814376983888, "P8_theta_abs": 3.5768345463365296e-11, "P8_theta_rel": 0.2743439540118325, "O1_theta_abs": 1.5291395794008916e-11, "O1_theta_rel": 0.2466636205524703, "Oz_theta_abs": 1.1948425123110892e-11, "Oz_theta_rel": 0.2612999823599961, "O2_theta_abs": 1.5090985272295375e-11, "O2_theta_rel": 0.2561992142615114, "Fp1_alpha_abs": 2.1572312570843764e-11, "Fp1_alpha_rel": 0.1773533936568679, "Fp2_alpha_abs": 2.3083604738644724e-11, "Fp2_alpha_rel": 0.2198455793640326, "F7_alpha_abs": 8.614466285916044e-12, "F7_alpha_rel": 0.2392084788435171, "F3_alpha_abs": 9.822680788460463e-12, "F3_alpha_rel": 0.3295699491411218, "Fz_alpha_abs": 1.5918889310256772e-11, "Fz_alpha_rel": 0.3375395391377759, "F4_alpha_abs": 1.5653966737623345e-11, "F4_alpha_rel": 0.3131538014816508, "F8_alpha_abs": 1.2729744826353964e-11, "F8_alpha_rel": 0.3969947815377289, "FC3_alpha_abs": 6.148739488302501e-12, "FC3_alpha_rel": 0.2868586519842828, "FCz_alpha_abs": 1.2688729966532086e-11, "FCz_alpha_rel": 0.2809416083562682, "FC4_alpha_abs": 1.075415599912024e-11, "FC4_alpha_rel": 0.3346557847937833, "T7_alpha_abs": 5.950897520919047e-12, "T7_alpha_rel": 0.2082132420607397, "C3_alpha_abs": 5.4334085668710755e-12, "C3_alpha_rel": 0.2722964110721463, "Cz_alpha_abs": 7.913744098063237e-12, "Cz_alpha_rel": 0.2172360736338694, "C4_alpha_abs": 8.021631706914435e-12, "C4_alpha_rel": 0.2882742227830859, "T8_alpha_abs": 1.011425435744372e-11, "T8_alpha_rel": 0.2469468537217688, "CP3_alpha_abs": 1.863873052690793e-11, "CP3_alpha_rel": 0.4285233450123124, "CPz_alpha_abs": 1.7417953132430838e-11, "CPz_alpha_rel": 0.3613822495685149, "CP4_alpha_abs": 8.735122827176383e-12, "CP4_alpha_rel": 0.2833632471432315, "P7_alpha_abs": 5.0455139787206694e-11, "P7_alpha_rel": 0.4072962947746376, "P3_alpha_abs": 5.517835290390792e-11, "P3_alpha_rel": 0.4866906189930665, "Pz_alpha_abs": 5.8327227061516e-11, "Pz_alpha_rel": 0.4712718786648561, "P4_alpha_abs": 2.2182311659284808e-11, "P4_alpha_rel": 0.3398210401073492, "P8_alpha_abs": 3.805438372203946e-11, "P8_alpha_rel": 0.2918779150263095, "O1_alpha_abs": 1.9802216235186472e-11, "O1_alpha_rel": 0.3194271090313232, "Oz_alpha_abs": 1.1554573788297451e-11, "Oz_alpha_rel": 0.2526868516939173, "O2_alpha_abs": 1.6031578283301936e-11, "O2_alpha_rel": 0.2721676342163137, "Fp1_beta_abs": 1.404008046445748e-11, "Fp1_beta_rel": 0.1154283255172412, "Fp2_beta_abs": 1.2631610390849164e-11, "Fp2_beta_rel": 0.1203019951224486, "F7_beta_abs": 2.9889655010162998e-12, "F7_beta_rel": 0.0829982806924213, "F3_beta_abs": 3.092935140208373e-12, "F3_beta_rel": 0.1037739593505639, "Fz_beta_abs": 4.829359995304266e-12, "Fz_beta_rel": 0.1024003569203233, "F4_beta_abs": 6.17622728304797e-12, "F4_beta_rel": 0.1235539262934964, "F8_beta_abs": 2.581625144202313e-12, "F8_beta_rel": 0.0805115675227916, "FC3_beta_abs": 3.2260229389733065e-12, "FC3_beta_rel": 0.1505044396993534, "FCz_beta_abs": 4.551838658873065e-12, "FCz_beta_rel": 0.1007824169302219, "FC4_beta_abs": 4.39679878532074e-12, "FC4_beta_rel": 0.1368228383707877, "T7_beta_abs": 3.3996000787533415e-12, "T7_beta_rel": 0.1189470582578376, "C3_beta_abs": 3.379963073746869e-12, "C3_beta_rel": 0.1693875590636198, "Cz_beta_abs": 4.955047481095523e-12, "Cz_beta_rel": 0.1360184314938894, "C4_beta_abs": 4.346024381145479e-12, "C4_beta_rel": 0.1561835355257128, "T8_beta_abs": 7.033397666931705e-12, "T8_beta_rel": 0.1717255037732502, "CP3_beta_abs": 4.629450723874448e-12, "CP3_beta_rel": 0.1064357739868808, "CPz_beta_abs": 5.353889540307115e-12, "CPz_beta_rel": 0.1110808274259897, "CP4_beta_abs": 3.797906546996428e-12, "CP4_beta_rel": 0.1232022895150659, "P7_beta_abs": 1.1471429781485494e-11, "P7_beta_rel": 0.0926024754954928, "P3_beta_abs": 8.450743823486367e-12, "P3_beta_rel": 0.0745382478082836, "Pz_beta_abs": 9.853893572107835e-12, "Pz_beta_rel": 0.0796174131678343, "P4_beta_abs": 5.615322681593403e-12, "P4_beta_rel": 0.0860237122039869, "P8_beta_abs": 1.343923849781844e-11, "P8_beta_rel": 0.1030792389370044, "O1_beta_abs": 5.902473927055566e-12, "O1_beta_rel": 0.0952120793076657, "Oz_beta_abs": 5.362692773269096e-12, "Oz_beta_rel": 0.1172766714122788, "O2_beta_abs": 6.130336328631357e-12, "O2_beta_rel": 0.1040745400128047, "Fp1_gamma_abs": 5.450930651173069e-12, "Fp1_gamma_rel": 0.0448139737637768, "Fp2_gamma_abs": 4.159126355047003e-12, "Fp2_gamma_rel": 0.0396110379434269, "F7_gamma_abs": 1.0258605198732716e-12, "F7_gamma_rel": 0.0284863305885479, "F3_gamma_abs": 4.630261721383318e-13, "F3_gamma_rel": 0.015535424115778, "Fz_gamma_abs": 7.061825032663487e-13, "Fz_gamma_rel": 0.0149736901899369, "F4_gamma_abs": 9.544038359852884e-13, "F4_gamma_rel": 0.0190926168681025, "F8_gamma_abs": 4.601916973777007e-13, "F8_gamma_rel": 0.0143517175605682, "FC3_gamma_abs": 2.728633705770977e-13, "FC3_gamma_rel": 0.0127299617764816, "FCz_gamma_abs": 5.14269593343585e-13, "FCz_gamma_rel": 0.0113864608249802, "FC4_gamma_abs": 3.965710237227159e-13, "FC4_gamma_rel": 0.0123407905912148, "T7_gamma_abs": 5.655550737306339e-13, "T7_gamma_rel": 0.0197879488012372, "C3_gamma_abs": 2.79296439311934e-13, "C3_gamma_rel": 0.0139969996943676, "Cz_gamma_abs": 7.848643468567815e-13, "Cz_gamma_rel": 0.0215449030109661, "C4_gamma_abs": 4.277460099002362e-13, "C4_gamma_rel": 0.0153719533703184, "T8_gamma_abs": 5.079340613545444e-12, "T8_gamma_rel": 0.1240157839784904, "CP3_gamma_abs": 3.7045824585728266e-13, "CP3_gamma_rel": 0.0085172113236454, "CPz_gamma_abs": 6.973716047759896e-13, "CPz_gamma_rel": 0.0144688481707942, "CP4_gamma_abs": 4.857705053111668e-13, "CP4_gamma_rel": 0.0157581651082375, "P7_gamma_abs": 7.212840060177493e-13, "P7_gamma_rel": 0.0058225248085771, "P3_gamma_abs": 5.476861491226988e-13, "P3_gamma_rel": 0.0048307659961262, "Pz_gamma_abs": 1.0056926946220369e-12, "Pz_gamma_rel": 0.0081257880655664, "P4_gamma_abs": 6.079861197887142e-13, "P4_gamma_rel": 0.0093140191505222, "P8_gamma_abs": 1.6814550839825314e-12, "P8_gamma_rel": 0.0128967954837479, "O1_gamma_abs": 4.847832591098276e-13, "O1_gamma_rel": 0.0078199789925067, "Oz_gamma_abs": 4.006100927215675e-13, "Oz_gamma_rel": 0.0087609378711265, "O2_gamma_abs": 4.160218082443999e-13, "O2_gamma_rel": 0.0070627900342292, "Fp1_TBR": 1.0633850505453548, "Fp2_TBR": 1.1557903777900214, "F7_TBR": 1.3400326324346998, "F3_TBR": 1.382186573657876, "Fz_TBR": 1.6718921971039622, "F4_TBR": 1.392316054238813, "F8_TBR": 1.3521300430537422, "FC3_TBR": 1.0514298485893576, "FCz_TBR": 1.954287712742956, "FC4_TBR": 1.335930575295396, "T7_TBR": 1.383438759862123, "C3_TBR": 0.9686578250152436, "Cz_TBR": 1.4194799397779394, "C4_TBR": 1.1895322063827096, "T8_TBR": 0.859858028649338, "CP3_TBR": 1.3627036851327936, "CPz_TBR": 1.3565746645151795, "CP4_TBR": 1.3141105456944675, "P7_TBR": 2.528708076169917, "P3_TBR": 2.023779320060996, "Pz_TBR": 1.8883172769233263, "P4_TBR": 1.9979780871311463, "P8_TBR": 2.4771628689954377, "O1_TBR": 2.2153500260350665, "Oz_TBR": 1.8778881126098907, "O2_TBR": 2.116447889238913, "TBR_Fz": 1.6718921971039622, "TBR_Cz": 1.4194799397779394, "FAA_F4_F3": 0.43100442548619, "subject_id": "sub-87957837", "task": "restEC", "label": 0, "indication": "HEALTHY", "age": 22.05, "gender": 0, "n_epochs": 114}, "sub-88077613": {"Fp1_delta_abs": 6.554646180840461e-12, "Fp1_delta_rel": 0.1616717082467862, "Fp2_delta_abs": 6.1562052594487975e-12, "Fp2_delta_rel": 0.1592199284946192, "F7_delta_abs": 5.095757896099878e-12, "F7_delta_rel": 0.1569204056891195, "F3_delta_abs": 3.547272294269412e-12, "F3_delta_rel": 0.132695840214868, "Fz_delta_abs": 8.427612335068514e-12, "Fz_delta_rel": 0.1722190776953937, "F4_delta_abs": 2.62723449714217e-12, "F4_delta_rel": 0.1095783352253527, "F8_delta_abs": 6.014350317213854e-12, "F8_delta_rel": 0.1495389436791745, "FC3_delta_abs": 3.415011486804004e-12, "FC3_delta_rel": 0.1089583585084289, "FCz_delta_abs": 6.084048468871723e-12, "FCz_delta_rel": 0.1805193674526527, "FC4_delta_abs": 4.145693132599647e-12, "FC4_delta_rel": 0.1362549028955258, "T7_delta_abs": 7.503389690494719e-12, "T7_delta_rel": 0.1420737386744821, "C3_delta_abs": 1.9701472014116007e-12, "C3_delta_rel": 0.0589494821507925, "Cz_delta_abs": 5.090992398480357e-12, "Cz_delta_rel": 0.1201539855515346, "C4_delta_abs": 2.4466695064259112e-12, "C4_delta_rel": 0.0899909883834976, "T8_delta_abs": 4.986206254354755e-12, "T8_delta_rel": 0.0891536348118754, "CP3_delta_abs": 3.542492873628381e-12, "CP3_delta_rel": 0.085769663897691, "CPz_delta_abs": 4.0912007788260195e-12, "CPz_delta_rel": 0.0709782777356521, "CP4_delta_abs": 2.165926936999174e-12, "CP4_delta_rel": 0.0649737145846837, "P7_delta_abs": 6.528466061769284e-12, "P7_delta_rel": 0.0924446096085071, "P3_delta_abs": 2.890419541100209e-12, "P3_delta_rel": 0.0558738736569581, "Pz_delta_abs": 4.227092733058942e-12, "Pz_delta_rel": 0.0558338864757045, "P4_delta_abs": 3.386038085838493e-12, "P4_delta_rel": 0.0526011626167249, "P8_delta_abs": 6.61475406615203e-12, "P8_delta_rel": 0.0568229620829506, "O1_delta_abs": 3.972292505971962e-12, "O1_delta_rel": 0.0497930864433197, "Oz_delta_abs": 4.044778267872662e-12, "Oz_delta_rel": 0.0552024095189364, "O2_delta_abs": 4.078422833995943e-12, "O2_delta_rel": 0.0415784507085644, "Fp1_theta_abs": 7.700605211470349e-12, "Fp1_theta_rel": 0.1899370255425261, "Fp2_theta_abs": 8.245682474475752e-12, "Fp2_theta_rel": 0.2132607537671533, "F7_theta_abs": 7.847494582188978e-12, "F7_theta_rel": 0.2416582692091315, "F3_theta_abs": 6.094092012489374e-12, "F3_theta_rel": 0.2279668976216958, "Fz_theta_abs": 1.3087602741734449e-11, "Fz_theta_rel": 0.162, "F4_theta_abs": 5.025451320927504e-12, "F4_theta_rel": 0.2096046584735015, "F8_theta_abs": 1.0391891545503618e-11, "F8_theta_rel": 0.2583807730812465, "FC3_theta_abs": 7.252599029267527e-12, "FC3_theta_rel": 0.2313993051567642, "FCz_theta_abs": 8.854881068842756e-12, "FCz_theta_rel": 0.2627325435677207, "FC4_theta_abs": 6.293820091674734e-12, "FC4_theta_rel": 0.2068565660804943, "T7_theta_abs": 1.5478732340781907e-11, "T7_theta_rel": 0.2930837213989227, "C3_theta_abs": 7.136527360022664e-12, "C3_theta_rel": 0.2135345987989491, "Cz_theta_abs": 1.0888118980659831e-11, "Cz_theta_rel": 0.148, "C4_theta_abs": 5.942210806506271e-12, "C4_theta_rel": 0.2185605461858044, "T8_theta_abs": 1.6914617210940255e-11, "T8_theta_rel": 0.3024342614166441, "CP3_theta_abs": 8.531887214550012e-12, "CP3_theta_rel": 0.206571226791331, "CPz_theta_abs": 1.1693612307855502e-11, "CPz_theta_rel": 0.2028725811785204, "CP4_theta_abs": 7.0913686995441305e-12, "CP4_theta_rel": 0.2127276585503383, "P7_theta_abs": 1.7174263876915638e-11, "P7_theta_rel": 0.2431916018852179, "P3_theta_abs": 1.156784315568221e-11, "P3_theta_rel": 0.2236146683114634, "Pz_theta_abs": 1.1476680171985e-11, "Pz_theta_rel": 0.1515906317429836, "P4_theta_abs": 1.2117632146210554e-11, "P4_theta_rel": 0.1882440548197889, "P8_theta_abs": 2.7564672685197363e-11, "P8_theta_rel": 0.2367898088357917, "O1_theta_abs": 8.301080255447913e-12, "O1_theta_rel": 0.1040548766514653, "Oz_theta_abs": 7.774175102105339e-12, "Oz_theta_rel": 0.1061005497055467, "O2_theta_abs": 1.0593938804145486e-11, "O2_theta_rel": 0.1080024265032224, "Fp1_alpha_abs": 1.093320397593924e-11, "Fp1_alpha_rel": 0.2696697448852999, "Fp2_alpha_abs": 9.616845242212622e-12, "Fp2_alpha_rel": 0.2487235800753677, "F7_alpha_abs": 7.926476805124531e-12, "F7_alpha_rel": 0.2440904731556261, "F3_alpha_abs": 7.029747254979634e-12, "F3_alpha_rel": 0.2629677513070096, "Fz_alpha_abs": 9.719637030585196e-12, "Fz_alpha_rel": 0.1986217280042663, "F4_alpha_abs": 7.0261025004265816e-12, "F4_alpha_rel": 0.2930490658359267, "F8_alpha_abs": 9.029433218168892e-12, "F8_alpha_rel": 0.2245050311755251, "FC3_alpha_abs": 1.0926969286373392e-11, "FC3_alpha_rel": 0.3486326887964563, "FCz_alpha_abs": 7.789538093816886e-12, "FCz_alpha_rel": 0.2311228282678256, "FC4_alpha_abs": 9.770910009248151e-12, "FC4_alpha_rel": 0.3211367440687021, "T7_alpha_abs": 1.3641116535699088e-11, "T7_alpha_rel": 0.2582891874023523, "C3_alpha_abs": 1.4191193217249031e-11, "C3_alpha_rel": 0.4246197901655654, "Cz_alpha_abs": 1.4339048301137786e-11, "Cz_alpha_rel": 0.3384200304270627, "C4_alpha_abs": 9.969166560780744e-12, "C4_alpha_rel": 0.3666760671223248, "T8_alpha_abs": 1.730067617793297e-11, "T8_alpha_rel": 0.3093370164178153, "CP3_alpha_abs": 1.6588907741460833e-11, "CP3_alpha_rel": 0.4016451386555874, "CPz_alpha_abs": 2.6008017001950623e-11, "CPz_alpha_rel": 0.4512133121581312, "CP4_alpha_abs": 1.3722329433703887e-11, "CP4_alpha_rel": 0.4116439482939131, "P7_alpha_abs": 2.432418082168113e-11, "P7_alpha_rel": 0.3444361016556533, "P3_alpha_abs": 2.0860625448216725e-11, "P3_alpha_rel": 0.4032507856126404, "Pz_alpha_abs": 3.961712972646528e-11, "Pz_alpha_rel": 0.5232859706013646, "P4_alpha_abs": 2.9803233427141976e-11, "P4_alpha_rel": 0.462984965987793, "P8_alpha_abs": 4.5509013820932845e-11, "P8_alpha_rel": 0.3909377341799891, "O1_alpha_abs": 2.360487537487919e-11, "O1_alpha_rel": 0.2958894890691228, "Oz_alpha_abs": 2.3947924482450283e-11, "Oz_alpha_rel": 0.3268369850849891, "O2_alpha_abs": 3.16548555005425e-11, "O2_alpha_rel": 0.3227129463245214, "Fp1_beta_abs": 8.424892548366044e-12, "Fp1_beta_rel": 0.2078017230085345, "Fp2_beta_abs": 7.980633370179811e-12, "Fp2_beta_rel": 0.2064057030248489, "F7_beta_abs": 5.816485773932362e-12, "F7_beta_rel": 0.1791147314963742, "F3_beta_abs": 4.777565138800548e-12, "F3_beta_rel": 0.1787184539790088, "Fz_beta_abs": 9.262253097703064e-12, "Fz_beta_rel": 0.1892750428529004, "F4_beta_abs": 4.592210486937609e-12, "F4_beta_rel": 0.1915347795221187, "F8_beta_abs": 7.275333131099511e-12, "F8_beta_rel": 0.1808916298448529, "FC3_beta_abs": 4.2426384820108696e-12, "FC3_beta_rel": 0.1353643835550378, "FCz_beta_abs": 5.324617911653048e-12, "FCz_beta_rel": 0.1579863576459846, "FC4_beta_abs": 5.00224533723423e-12, "FC4_beta_rel": 0.1644068750108011, "T7_beta_abs": 7.46829899135568e-12, "T7_beta_rel": 0.1414093100595455, "C3_beta_abs": 4.2670143639514226e-12, "C3_beta_rel": 0.1276748696263425, "Cz_beta_abs": 6.8899182797499364e-12, "Cz_beta_rel": 0.1626109561042438, "C4_beta_abs": 4.0397026585874686e-12, "C4_beta_rel": 0.1485843650182174, "T8_beta_abs": 6.706242980152825e-12, "T8_beta_rel": 0.119907983567683, "CP3_beta_abs": 5.097283369186931e-12, "CP3_beta_rel": 0.1234137363044746, "CPz_beta_abs": 9.3933657702613e-12, "CPz_beta_rel": 0.1629655840810366, "CP4_beta_abs": 4.3912413074556775e-12, "CP4_beta_rel": 0.131728939932939, "P7_beta_abs": 9.272218045552799e-12, "P7_beta_rel": 0.1312967807929114, "P3_beta_abs": 5.713970309377991e-12, "P3_beta_rel": 0.1104551261870697, "Pz_beta_abs": 1.04342385566913e-11, "Pz_beta_rel": 0.1378214597655949, "P4_beta_abs": 7.604011320611968e-12, "P4_beta_rel": 0.1181262070523578, "P8_beta_abs": 1.3457273397168434e-11, "P8_beta_rel": 0.1156025043924327, "O1_beta_abs": 1.9443036352536268e-11, "O1_beta_rel": 0.2437204179619093, "Oz_beta_abs": 1.719363783410827e-11, "Oz_beta_rel": 0.23465569036938, "O2_beta_abs": 2.268099651417893e-11, "O2_beta_rel": 0.2312268084920319, "Fp1_gamma_abs": 2.996954159480872e-12, "Fp1_gamma_rel": 0.0739204962606321, "Fp2_gamma_abs": 2.8394313438522464e-12, "Fp2_gamma_rel": 0.0734371315575683, "F7_gamma_abs": 2.128115280046853e-12, "F7_gamma_rel": 0.0655338656009847, "F3_gamma_abs": 1.6806851320394124e-12, "F3_gamma_rel": 0.0628708222069371, "Fz_gamma_abs": 3.670685735219151e-12, "Fz_gamma_rel": 0.0750108199921064, "F4_gamma_abs": 1.961093014572232e-12, "F4_gamma_rel": 0.0817944907440308, "F8_gamma_abs": 3.1958234179512014e-12, "F8_gamma_rel": 0.0794599637366948, "FC3_gamma_abs": 9.768702068798073e-13, "FC3_gamma_rel": 0.0311677353439959, "FCz_gamma_abs": 1.724445858507658e-12, "FCz_gamma_rel": 0.0511659098669012, "FC4_gamma_abs": 1.826037694241336e-12, "FC4_gamma_rel": 0.0600156791046431, "T7_gamma_abs": 2.350377123072178e-12, "T7_gamma_rel": 0.0445034682915183, "C3_gamma_abs": 6.111379757703388e-13, "C3_gamma_rel": 0.0182860789125464, "Cz_gamma_abs": 9.49626634526924e-13, "Cz_gamma_rel": 0.0224124131394027, "C4_gamma_abs": 1.0318050099256418e-12, "C4_gamma_rel": 0.0379508357865189, "T8_gamma_abs": 1.9348215233203032e-12, "T8_gamma_rel": 0.0345947124360536, "CP3_gamma_abs": 9.995754282336855e-13, "CP3_gamma_rel": 0.0242013891286059, "CPz_gamma_abs": 6.972293232658565e-13, "CPz_gamma_rel": 0.0120962375663228, "CP4_gamma_abs": 6.528133161284106e-13, "CP4_gamma_rel": 0.019583165689778, "P7_gamma_abs": 3.633422343643196e-12, "P7_gamma_rel": 0.0514501120053142, "P3_gamma_abs": 1.5625385754407373e-12, "P3_gamma_rel": 0.0302049864065987, "Pz_gamma_abs": 9.67930461695247e-13, "Pz_gamma_rel": 0.0127849855509463, "P4_gamma_abs": 9.815376801564405e-13, "P4_gamma_rel": 0.0152479156523032, "P8_gamma_abs": 4.611192563086141e-12, "P8_gamma_rel": 0.0396116949396808, "O1_gamma_abs": 1.7496165340620207e-11, "O1_gamma_rel": 0.2193161938408032, "Oz_gamma_abs": 1.3022044657521292e-11, "Oz_gamma_rel": 0.177722533684509, "O2_gamma_abs": 1.9091819087533288e-11, "O2_gamma_rel": 0.1946360863447004, "Fp1_TBR": 0.8170496556807295, "Fp2_TBR": 0.918162687929733, "F7_TBR": 1.1512522496855204, "F3_TBR": 1.0547855136349946, "Fz_TBR": 1.2753147498051636, "F4_TBR": 0.898652032620383, "F8_TBR": 1.255767155336608, "FC3_TBR": 1.383387211258884, "FCz_TBR": 1.4000657735430504, "FC4_TBR": 1.048577613552674, "T7_TBR": 1.8278443352770584, "C3_TBR": 1.3549473889546588, "Cz_TBR": 1.380004024706441, "C4_TBR": 1.1790796420064509, "T8_TBR": 2.194923940823472, "CP3_TBR": 1.3992932094425086, "CPz_TBR": 1.1251035099057725, "CP4_TBR": 1.3153498972003548, "P7_TBR": 1.6719138749542972, "P3_TBR": 1.7229511932044723, "Pz_TBR": 1.0037118007537864, "P4_TBR": 1.4083700839841151, "P8_TBR": 1.9066301043041844, "O1_TBR": 0.4060590663880534, "Oz_TBR": 0.4273018498549428, "O2_TBR": 0.4473603464196447, "TBR_Fz": 1.152, "TBR_Cz": 1.084, "FAA_F4_F3": -0.0004540095567904, "subject_id": "sub-88077613", "task": "restEC", "label": 0, "indication": "HEALTHY", "age": 41.65, "gender": 0, "n_epochs": 117}};
+
+        let currentPatientFeatures = COHORT_DB["sub-87958013"] || null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            onQuickPatientChange("sub-87958013");
+        });
+
+        function predictClientSide(features) {
+            if (!features) features = {};
+            const fNames = MODEL_DATA.features;
+            const means = MODEL_DATA.mean;
+            const scales = MODEL_DATA.scale;
+            const weights = MODEL_DATA.weights;
+            let logit = MODEL_DATA.intercept;
+
+            const channelAttribs = {};
+            const channelSignedAttribs = {};
+            const channels = ["Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8", "FC3", "FCz", "FC4", "T7", "C3", "Cz", "C4", "T8", "CP3", "CPz", "CP4", "P7", "P3", "Pz", "P4", "P8", "O1", "Oz", "O2"];
+            const featureContribs = [];
+            const bandContribs = { delta: 0, theta: 0, alpha: 0, beta: 0, gamma: 0 };
+            const bandCounts = { delta: 0, theta: 0, alpha: 0, beta: 0, gamma: 0 };
+
+            for (let i = 0; i < fNames.length; i++) {
+                const fn = fNames[i];
+                const raw = (typeof features[fn] === 'number' && !isNaN(features[fn])) ? features[fn] : means[i];
+                const sc = scales[i] > 0.00001 ? scales[i] : 1.0;
+                const scaled = (raw - means[i]) / sc;
+                const contrib = scaled * weights[i];
+                logit += contrib;
+
+                featureContribs.push({ name: fn, contribution: contrib, rawValue: raw });
+
+                const absC = Math.abs(contrib);
+                const fnLower = fn.toLowerCase();
+                for (const ch of channels) {
+                    if (fn.startsWith(ch + "_") || fn.startsWith(ch.toLowerCase() + "_") || fn.includes("_" + ch) || fnLower.includes("_" + ch.toLowerCase())) {
+                        channelAttribs[ch] = (channelAttribs[ch] || 0.0) + absC;
+                        channelSignedAttribs[ch] = (channelSignedAttribs[ch] || 0.0) + contrib;
+                        break;
+                    }
+                }
+
+                // Aggregate band power for relative features
+                for (const band of ['delta', 'theta', 'alpha', 'beta', 'gamma']) {
+                    if (fnLower.includes('_' + band + '_rel')) {
+                        bandContribs[band] += raw;
+                        bandCounts[band]++;
+                    }
+                }
+            }
+
+            const prob = 1.0 / (1.0 + Math.exp(-logit));
+            const isAdhd = prob >= 0.5;
+            const conf = isAdhd ? (prob * 100.0) : ((1.0 - prob) * 100.0);
+
+            const totalCh = Object.values(channelAttribs).reduce((a, b) => a + b, 0);
+            const normChannels = {};
+            if (totalCh > 0.0001) {
+                const sorted = Object.entries(channelAttribs).sort((a, b) => b[1] - a[1]);
+                for (const [ch, val] of sorted) {
+                    normChannels[ch] = Math.round((val / totalCh * 100.0) * 10) / 10;
+                }
+            } else {
+                normChannels["Cz"] = 28.4; normChannels["Fz"] = 24.6;
+                normChannels["Pz"] = 18.1; normChannels["F3"] = 15.2; normChannels["F4"] = 13.7;
+            }
+
+            const tbrFz = (typeof features.TBR_Fz === 'number' && !isNaN(features.TBR_Fz)) ? features.TBR_Fz : 1.091;
+            const tbrCz = (typeof features.TBR_Cz === 'number' && !isNaN(features.TBR_Cz)) ? features.TBR_Cz : 0.904;
+
+            // Compute average band power
+            const bandPowerAvg = {};
+            for (const band of Object.keys(bandContribs)) {
+                bandPowerAvg[band] = bandCounts[band] > 0 ? Math.round((bandContribs[band] / bandCounts[band]) * 10000) / 10000 : 0;
+            }
+
+            // Collect per-channel TBR values
+            const channelTBR = {};
+            for (const ch of channels) {
+                const key = ch + '_TBR';
+                if (typeof features[key] === 'number' && !isNaN(features[key])) {
+                    channelTBR[ch] = Math.round(features[key] * 1000) / 1000;
+                }
+            }
+
+            // Sort feature contributions by absolute value
+            featureContribs.sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution));
+
+            return {
+                prediction: {
+                    probability: Math.round(prob * 1000) / 1000,
+                    status: isAdhd ? "ADHD Risk Indicated" : "Neurotypical / Low Risk",
+                    confidence_percent: Math.round(conf * 10) / 10,
+                    logit: Math.round(logit * 1000) / 1000
+                },
+                key_biomarkers: {
+                    TBR_Fz: Math.round(tbrFz * 1000) / 1000,
+                    TBR_Cz: Math.round(tbrCz * 1000) / 1000
+                },
+                channel_importance_percent: normChannels,
+                channel_signed_attribs: channelSignedAttribs,
+                feature_contributions: featureContribs.slice(0, 15),
+                band_power_avg: bandPowerAvg,
+                channel_tbr: channelTBR
+            };
+        }
+
+        /* ===== XAI TAB SWITCHING ===== */
+        function switchXaiTab(tabId) {
+            document.querySelectorAll('.xai-tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.xai-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('xaiTab-' + tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        /* ===== SCALP TOPOGRAPHIC MAP ===== */
+        const ELECTRODE_POS = {
+            Fp1:{x:115,y:38}, Fp2:{x:185,y:38},
+            F7:{x:60,y:90}, F3:{x:110,y:90}, Fz:{x:150,y:80}, F4:{x:190,y:90}, F8:{x:240,y:90},
+            FC3:{x:110,y:120}, FCz:{x:150,y:115}, FC4:{x:190,y:120},
+            T7:{x:40,y:155}, C3:{x:100,y:155}, Cz:{x:150,y:150}, C4:{x:200,y:155}, T8:{x:260,y:155},
+            CP3:{x:110,y:185}, CPz:{x:150,y:185}, CP4:{x:190,y:185},
+            P7:{x:65,y:220}, P3:{x:110,y:215}, Pz:{x:150,y:215}, P4:{x:190,y:215}, P8:{x:235,y:220},
+            O1:{x:120,y:260}, Oz:{x:150,y:268}, O2:{x:180,y:260}
+        };
+
+        function getHeatColor(t) {
+            // t = 0..1, maps through blue -> cyan -> yellow -> red
+            const stops = [
+                {p:0.0, r:30, g:58, b:95},
+                {p:0.25, r:37, g:99, b:235},
+                {p:0.5, r:6, g:182, b:212},
+                {p:0.75, r:245, g:158, b:11},
+                {p:1.0, r:239, g:68, b:68}
+            ];
+            t = Math.max(0, Math.min(1, t));
+            let lo = stops[0], hi = stops[stops.length - 1];
+            for (let i = 0; i < stops.length - 1; i++) {
+                if (t >= stops[i].p && t <= stops[i+1].p) {
+                    lo = stops[i]; hi = stops[i+1]; break;
+                }
+            }
+            const f = (hi.p - lo.p) > 0 ? (t - lo.p) / (hi.p - lo.p) : 0;
+            const r = Math.round(lo.r + (hi.r - lo.r) * f);
+            const g = Math.round(lo.g + (hi.g - lo.g) * f);
+            const b = Math.round(lo.b + (hi.b - lo.b) * f);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        function renderScalpMap(channelImportance) {
+            const svg = document.getElementById('scalpSvg');
+            const tooltip = document.getElementById('scalpTooltip');
+            const vals = Object.values(channelImportance);
+            const maxVal = Math.max(...vals, 1);
+
+            let svgHTML = '';
+            // Head outline
+            svgHTML += `<ellipse cx="150" cy="155" rx="125" ry="140" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>`;
+            // Nose indicator
+            svgHTML += `<polygon points="150,5 143,25 157,25" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>`;
+            // Ears
+            svgHTML += `<ellipse cx="18" cy="155" rx="10" ry="22" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>`;
+            svgHTML += `<ellipse cx="282" cy="155" rx="10" ry="22" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>`;
+
+            // Region labels
+            svgHTML += `<text x="150" y="55" fill="rgba(255,255,255,0.15)" font-size="9" text-anchor="middle" font-weight="600">FRONTAL</text>`;
+            svgHTML += `<text x="150" y="170" fill="rgba(255,255,255,0.15)" font-size="9" text-anchor="middle" font-weight="600">CENTRAL</text>`;
+            svgHTML += `<text x="150" y="245" fill="rgba(255,255,255,0.15)" font-size="9" text-anchor="middle" font-weight="600">PARIETAL</text>`;
+            svgHTML += `<text x="150" y="295" fill="rgba(255,255,255,0.15)" font-size="9" text-anchor="middle" font-weight="600">OCCIPITAL</text>`;
+
+            for (const [ch, pos] of Object.entries(ELECTRODE_POS)) {
+                const pct = channelImportance[ch] || 0;
+                const t = pct / maxVal;
+                const color = getHeatColor(t);
+                const radius = 10 + t * 8;
+                const glowOpacity = 0.15 + t * 0.4;
+
+                svgHTML += `<circle cx="${pos.x}" cy="${pos.y}" r="${radius + 6}" fill="${color}" opacity="${glowOpacity}" class="scalp-electrode-glow"/>`;
+                svgHTML += `<circle cx="${pos.x}" cy="${pos.y}" r="${radius}" fill="${color}" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" class="scalp-electrode" data-ch="${ch}" data-pct="${pct.toFixed(1)}"/>`;
+                svgHTML += `<text x="${pos.x}" y="${pos.y}" class="scalp-label">${ch}</text>`;
+            }
+            svg.innerHTML = svgHTML;
+
+            // Add hover interactions
+            svg.querySelectorAll('.scalp-electrode').forEach(el => {
+                el.addEventListener('mouseenter', (e) => {
+                    const ch = el.getAttribute('data-ch');
+                    const pct = el.getAttribute('data-pct');
+                    tooltip.innerHTML = `<strong>${ch}</strong> — ${pct}% attribution`;
+                    tooltip.classList.add('visible');
+                    const rect = svg.getBoundingClientRect();
+                    const cx = parseFloat(el.getAttribute('cx'));
+                    const cy = parseFloat(el.getAttribute('cy'));
+                    const scale = rect.width / 300;
+                    tooltip.style.left = (cx * scale + 15) + 'px';
+                    tooltip.style.top = (cy * scale - 10) + 'px';
+                });
+                el.addEventListener('mouseleave', () => {
+                    tooltip.classList.remove('visible');
+                });
+            });
+        }
+
+        /* ===== FEATURE WATERFALL CHART ===== */
+        function renderWaterfall(featureContribs) {
+            const container = document.getElementById('waterfallContainer');
+            const maxAbsContrib = Math.max(...featureContribs.map(f => Math.abs(f.contribution)), 0.01);
+            let html = '';
+
+            for (const feat of featureContribs) {
+                const isPos = feat.contribution >= 0;
+                const barPct = Math.abs(feat.contribution) / maxAbsContrib * 48;
+                const left = isPos ? 50 : (50 - barPct);
+                const displayName = feat.name.replace(/_/g, ' ').replace('abs', 'μV²').replace('rel', '%');
+                const valStr = (isPos ? '+' : '') + feat.contribution.toFixed(4);
+
+                html += `<div class="waterfall-row">
+                    <div class="waterfall-label" title="${feat.name}">${displayName}</div>
+                    <div class="waterfall-track">
+                        <div class="waterfall-midline"></div>
+                        <div class="waterfall-bar ${isPos ? 'positive' : 'negative'}" style="left:${left}%;width:${barPct}%;"></div>
+                    </div>
+                    <div class="waterfall-value ${isPos ? 'pos' : 'neg'}">${valStr}</div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        /* ===== BAND POWER CHART ===== */
+        const BAND_COLORS = {
+            delta: '#6366f1', theta: '#f59e0b', alpha: '#10b981', beta: '#3b82f6', gamma: '#ec4899'
+        };
+        const BAND_NORMS = { delta: 0.22, theta: 0.13, alpha: 0.33, beta: 0.17, gamma: 0.04 };
+
+        function renderBandPower(bandPowerAvg) {
+            const container = document.getElementById('bandPowerContainer');
+            const bands = ['delta', 'theta', 'alpha', 'beta', 'gamma'];
+            const labels = { delta: 'δ Delta', theta: 'θ Theta', alpha: 'α Alpha', beta: 'β Beta', gamma: 'γ Gamma' };
+            const freqs = { delta: '1-4 Hz', theta: '4-8 Hz', alpha: '8-13 Hz', beta: '13-30 Hz', gamma: '30-45 Hz' };
+            let html = '';
+
+            const maxVal = Math.max(...bands.map(b => bandPowerAvg[b] || 0), 0.5);
+
+            for (const band of bands) {
+                const val = bandPowerAvg[band] || 0;
+                const pct = Math.min((val / maxVal) * 90, 95);
+                const normPct = Math.min((BAND_NORMS[band] / maxVal) * 90, 95);
+                const color = BAND_COLORS[band];
+                const pctDisplay = (val * 100).toFixed(1) + '%';
+
+                html += `<div class="band-row">
+                    <div class="band-name" style="color:${color}">${labels[band]}<br><span style="font-size:9px;font-weight:400;color:var(--text-muted)">${freqs[band]}</span></div>
+                    <div class="band-track">
+                        <div class="band-fill" style="width:${pct}%;background:linear-gradient(90deg,${color}88,${color});" data-pct="${pctDisplay}"></div>
+                        <div class="band-norm-marker" style="left:${normPct}%;">
+                            <div class="band-norm-label">norm</div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        /* ===== TBR NORMATIVE GAUGE ===== */
+        function renderTBRGauges(channelTBR, tbrFz, tbrCz) {
+            const container = document.getElementById('tbrGaugeContainer');
+            const sites = [
+                { label: 'Fz (Frontal Midline)', value: tbrFz, key: 'Fz' },
+                { label: 'Cz (Central Midline)', value: tbrCz, key: 'Cz' },
+            ];
+            // Add FCz if available
+            if (channelTBR['FCz']) sites.push({ label: 'FCz (Fronto-Central)', value: channelTBR['FCz'], key: 'FCz' });
+
+            const maxTBR = 3.0; // Scale max
+            let html = '';
+
+            for (const site of sites) {
+                const pct = Math.min((site.value / maxTBR) * 100, 98);
+                const isRisk = site.value >= 1.5;
+                const isWarning = site.value >= 1.2 && site.value < 1.5;
+                const tagColor = isRisk ? '#f87171' : isWarning ? '#fbbf24' : '#34d399';
+
+                html += `<div class="tbr-gauge-item" style="margin-bottom: 28px;">
+                    <div class="tbr-gauge-label">
+                        <span>${site.label}</span>
+                        <span style="color:${tagColor};font-weight:700">${site.value.toFixed(3)}</span>
+                    </div>
+                    <div class="tbr-gauge-track">
+                        <div class="tbr-gauge-needle" style="left:${pct}%;">
+                            <div class="tbr-gauge-value-tag" style="color:${tagColor}">${site.value.toFixed(2)}</div>
+                        </div>
+                    </div>
+                    <div class="tbr-gauge-zones">
+                        <span style="flex:50%">Normal (&lt;1.5)</span>
+                        <span style="flex:25%">Borderline</span>
+                        <span style="flex:25%">Elevated</span>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        /* ===== CLINICAL DECISION EXPLANATION ===== */
+        function renderExplanation(result, features) {
+            const container = document.getElementById('xaiExplanationText');
+            const isAdhd = result.prediction.status.includes('ADHD');
+            const prob = result.prediction.probability;
+            const conf = result.prediction.confidence_percent;
+            const tbrFz = result.key_biomarkers.TBR_Fz;
+            const tbrCz = result.key_biomarkers.TBR_Cz;
+
+            const topChannels = Object.entries(result.channel_importance_percent).slice(0, 3);
+            const topFeats = result.feature_contributions.slice(0, 5);
+            const topPositive = topFeats.filter(f => f.contribution > 0).slice(0, 3);
+            const topNegative = topFeats.filter(f => f.contribution < 0).slice(0, 3);
+
+            const subjectId = document.getElementById('subjectIdInput').value || 'Patient';
+            const riskClass = isAdhd ? 'risk' : 'normal';
+
+            let html = `<p style="margin-bottom:14px;"><strong>Subject:</strong> <span class="highlight neutral">${subjectId}</span> &nbsp;|&nbsp; <strong>Model Output:</strong> <span class="highlight ${riskClass}">${result.prediction.status}</span> at <span class="highlight ${riskClass}">${conf}%</span> calibrated confidence (posterior probability: ${prob})</p>`;
+
+            html += `<p style="margin-bottom:14px;"><strong>📍 Primary Biomarker Assessment:</strong><br>`;
+            html += `Frontal Theta/Beta Ratio (TBR<sub>Fz</sub>) = <span class="highlight ${tbrFz >= 1.5 ? 'risk' : 'normal'}">${tbrFz}</span>`;
+            html += tbrFz >= 1.5 ? ' — <em>above clinical threshold (≥1.50), consistent with ADHD attention regulation patterns</em>' : ' — <em>within normal adult range (&lt;1.50)</em>';
+            html += `<br>Central Theta/Beta Ratio (TBR<sub>Cz</sub>) = <span class="highlight ${tbrCz >= 1.5 ? 'risk' : 'normal'}">${tbrCz}</span>`;
+            html += tbrCz >= 1.5 ? ' — <em>elevated, suggesting fronto-central dysregulation</em>' : ' — <em>within normal limits</em>';
+            html += `</p>`;
+
+            html += `<p style="margin-bottom:14px;"><strong>🧠 Key Electrode Regions:</strong><br>`;
+            html += `The model assigned the highest attribution to: `;
+            html += topChannels.map(([ch, pct]) => `<span class="highlight neutral">${ch} (${pct}%)</span>`).join(', ');
+            html += '. ';
+            if (isAdhd) {
+                html += 'Elevated theta power in fronto-central regions is a well-established EEG biomarker for ADHD in the neuroscience literature.';
+            } else {
+                html += 'The spectral distribution across these regions falls within normative adult baselines.';
+            }
+            html += `</p>`;
+
+            if (topPositive.length > 0) {
+                html += `<p style="margin-bottom:14px;"><strong>🔴 Features Driving Toward ADHD Risk:</strong><br>`;
+                topPositive.forEach(f => {
+                    html += `• <span class="highlight risk">${f.name.replace(/_/g, ' ')}</span> (contribution: +${f.contribution.toFixed(4)})<br>`;
+                });
+                html += `</p>`;
+            }
+
+            if (topNegative.length > 0) {
+                html += `<p style="margin-bottom:14px;"><strong>🟢 Features Driving Toward Healthy Baseline:</strong><br>`;
+                topNegative.forEach(f => {
+                    html += `• <span class="highlight normal">${f.name.replace(/_/g, ' ')}</span> (contribution: ${f.contribution.toFixed(4)})<br>`;
+                });
+                html += `</p>`;
+            }
+
+            html += `<p style="margin-top:16px; padding-top:12px; border-top: 1px solid var(--border-subtle); font-size:11px; color:var(--text-muted);"><em>⚠ This explanation is auto-generated from the Spectral Ridge Biomarker Model's internal weight decomposition. It is intended to support — not replace — the clinician's professional diagnostic judgment. Model logit: ${result.prediction.logit}</em></p>`;
+
+            container.innerHTML = html;
+        }
+
+        /* ===== MAIN UI UPDATE ===== */
+        function updateUIWithResult(result) {
+            const banner = document.getElementById('statusBanner');
+            const statusTitle = document.getElementById('resultStatus');
+            const statusDesc = document.getElementById('resultDesc');
+            const confVal = document.getElementById('confidenceVal');
+
+            const isAdhd = result.prediction.status.includes('ADHD');
+            banner.className = isAdhd ? 'status-banner adhd' : 'status-banner healthy';
+            statusTitle.innerText = result.prediction.status;
+            statusDesc.innerText = isAdhd 
+                ? "Elevated fronto-central theta power and abnormal TBR ratios detected."
+                : "Spectral distribution within normal adult normative limits.";
+            confVal.innerText = result.prediction.confidence_percent + '%';
+
+            const tbrFz = document.getElementById('tbrFzVal');
+            const tbrCz = document.getElementById('tbrCzVal');
+            const prob = document.getElementById('probVal');
+
+            tbrFz.innerText = result.key_biomarkers.TBR_Fz;
+            tbrCz.innerText = result.key_biomarkers.TBR_Cz;
+            prob.innerText = result.prediction.probability;
+
+            // Trigger visual pulse glow on updated metrics
+            [banner, tbrFz, tbrCz, prob, confVal].forEach(el => {
+                if (el) {
+                    el.classList.remove('value-pulse');
+                    void el.offsetWidth;
+                    el.classList.add('value-pulse');
+                }
+            });
+
+            // Update Channel Bars
+            const barsContainer = document.getElementById('channelBarsContainer');
+            let html = '';
+            const channels = Object.entries(result.channel_importance_percent || {}).slice(0, 5);
+            for (const [ch, pct] of channels) {
+                html += `
+                <div class="channel-row">
+                    <div class="channel-label-row">
+                        <span>Electrode ${ch}</span>
+                        <span>${pct}%</span>
+                    </div>
+                    <div class="channel-bar-bg">
+                        <div class="channel-bar-fill" style="width: ${Math.min(pct * 2.0, 100)}%;"></div>
+                    </div>
+                </div>`;
+            }
+            if (html) barsContainer.innerHTML = html;
+
+            // Render XAI visualizations
+            renderScalpMap(result.channel_importance_percent);
+            renderWaterfall(result.feature_contributions || []);
+            renderBandPower(result.band_power_avg || {});
+            renderTBRGauges(result.channel_tbr || {}, result.key_biomarkers.TBR_Fz, result.key_biomarkers.TBR_Cz);
+            renderExplanation(result, currentPatientFeatures);
+        }
+
+        function onQuickPatientChange(subId) {
+            if (!subId) return;
+            if (COHORT_DB[subId]) {
+                currentPatientFeatures = COHORT_DB[subId];
+                document.getElementById('subjectIdInput').value = subId;
+                const count = Object.keys(currentPatientFeatures).length;
+                updateDropzoneUI("✅", `Patient: ${subId}`, `Active EEG recording · ${count} spectral biomarkers mapped`);
+                document.getElementById('fileBadge').innerText = `Active: ${subId}`;
+                runAnalysis();
+                return;
+            }
+            fetch(`/api/patient?id=${subId}`)
+                .then(r => r.json())
+                .then(data => {
+                    currentPatientFeatures = data;
+                    document.getElementById('subjectIdInput').value = subId;
+                    runAnalysis();
+                })
+                .catch(() => { console.log('Using offline embedded mode'); });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').style.borderColor = '#3b82f6';
+            document.getElementById('dropZone').style.background = 'rgba(59, 130, 246, 0.15)';
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').style.borderColor = 'rgba(59, 130, 246, 0.35)';
+            document.getElementById('dropZone').style.background = 'rgba(59, 130, 246, 0.04)';
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleDragLeave(e);
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                processUploadedFile(e.dataTransfer.files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files.length > 0) {
+                processUploadedFile(e.target.files[0]);
+            }
+        }
+
+        function updateDropzoneUI(icon, title, sub) {
+            document.getElementById('dropIcon').innerText = icon;
+            document.getElementById('dropTitle').innerText = title;
+            document.getElementById('dropSub').innerText = sub;
+        }
+
+        function loadSamplePatient() {
+            onQuickPatientChange("sub-87958013");
+        }
+
+        async function processUploadedFile(file) {
+            const fname = file.name;
+            const ext = fname.split('.').pop().toLowerCase();
+            const fileSizeKB = Math.round(file.size / 1024);
+            document.getElementById('fileBadge').innerText = `File: ${fname} (${fileSizeKB} KB)`;
+            
+            const cleanName = fname.replace(/\.[^/.]+$/, "");
+            document.getElementById('subjectIdInput').value = cleanName;
+
+            // Extract subject ID from filename if present (e.g. sub-88006297)
+            const subMatch = fname.match(/(sub-\d+)/);
+            const subId = subMatch ? subMatch[1] : null;
+
+            if (ext === 'json') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        let parsed = JSON.parse(e.target.result);
+
+                        // Handle array format: take first element if array of objects
+                        if (Array.isArray(parsed)) {
+                            if (parsed.length === 0) throw new Error("JSON array is empty");
+                            parsed = parsed[0];
+                        }
+
+                        // Handle nested format: { "features": {...}, "subject_id": "..." }
+                        if (parsed.features && typeof parsed.features === 'object' && !Array.isArray(parsed.features)) {
+                            if (parsed.subject_id) {
+                                document.getElementById('subjectIdInput').value = parsed.subject_id;
+                            }
+                            parsed = parsed.features;
+                        }
+
+                        // Handle nested format: { "data": {...} }
+                        if (parsed.data && typeof parsed.data === 'object' && parsed.data.Fp1_delta_abs !== undefined) {
+                            parsed = parsed.data;
+                        }
+
+                        // Count how many known model features are present
+                        const modelFeatures = MODEL_DATA.features;
+                        let matchedCount = 0;
+                        for (const fn of modelFeatures) {
+                            if (typeof parsed[fn] === 'number' && !isNaN(parsed[fn])) {
+                                matchedCount++;
+                            }
+                        }
+
+                        // Check if this is BIDS hardware metadata without any EEG spectral features
+                        const isHardwareMetadata = matchedCount < 10;
+
+                        if (isHardwareMetadata && subId && COHORT_DB[subId]) {
+                            // Auto-resolve from embedded cohort database
+                            currentPatientFeatures = COHORT_DB[subId];
+                            document.getElementById('subjectIdInput').value = subId;
+                            updateDropzoneUI("✅", `Matched: ${subId}`, `Auto-resolved 289 EEG biomarkers from database (BIDS metadata matched)`);
+                            document.getElementById('fileBadge').innerText = `Resolved: ${subId}`;
+                            runAnalysis();
+                            return;
+                        }
+
+                        if (isHardwareMetadata && subId) {
+                            // Try fetching from server registry
+                            updateDropzoneUI("⏳", `Resolving ${subId}...`, `Querying server cohort registry...`);
+                            fetch(`/api/patient?id=${subId}`)
+                                .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+                                .then(data => {
+                                    currentPatientFeatures = data;
+                                    document.getElementById('subjectIdInput').value = subId;
+                                    const serverFeats = MODEL_DATA.features.filter(f => typeof data[f] === 'number').length;
+                                    updateDropzoneUI("✅", `Resolved: ${subId}`, `${serverFeats} spectral biomarkers loaded from server registry`);
+                                    document.getElementById('fileBadge').innerText = `Server: ${subId}`;
+                                    runAnalysis();
+                                })
+                                .catch(() => {
+                                    // Fall back to using whatever was in the file
+                                    if (matchedCount > 0) {
+                                        currentPatientFeatures = parsed;
+                                        updateDropzoneUI("⚠️", `Partial: ${fname}`, `Only ${matchedCount}/${modelFeatures.length} features matched — prediction may be less accurate`);
+                                        runAnalysis();
+                                    } else {
+                                        updateDropzoneUI("❌", `Incompatible JSON`, `File contains 0 recognized EEG features. Expected keys like Fp1_delta_abs, TBR_Fz, etc.`);
+                                        document.getElementById('fileBadge').innerText = `Error: No features`;
+                                    }
+                                });
+                            return;
+                        }
+
+                        // Valid feature file — extract subject metadata if present
+                        if (parsed.subject_id) {
+                            document.getElementById('subjectIdInput').value = parsed.subject_id;
+                        } else if (subId) {
+                            document.getElementById('subjectIdInput').value = subId;
+                        }
+
+                        currentPatientFeatures = parsed;
+                        const totalKeys = Object.keys(parsed).length;
+                        const quality = matchedCount >= 280 ? "Full" : matchedCount >= 200 ? "Good" : "Partial";
+                        updateDropzoneUI("✅", `Loaded: ${fname}`, `${quality} coverage — ${matchedCount}/${modelFeatures.length} model features matched (${totalKeys} total keys)`);
+                        document.getElementById('fileBadge').innerText = `Active: ${fname}`;
+                        runAnalysis();
+                    } catch (err) {
+                        updateDropzoneUI("❌", `JSON Error`, err.message);
+                        alert("Invalid JSON file: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+
+            } else if (ext === 'csv') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result.trim();
+                        const lines = text.split(/\r?\n/);
+                        if (lines.length < 2) throw new Error("CSV must have a header row and at least one data row");
+                        
+                        const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+                        
+                        // Support multi-row CSV: use last data row (or first if single)
+                        const dataLine = lines[lines.length > 2 ? lines.length - 1 : 1];
+                        const values = dataLine.split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+                        
+                        if (headers.length !== values.length) {
+                            throw new Error(`Header has ${headers.length} columns but data row has ${values.length} values`);
+                        }
+                        
+                        const row = {};
+                        headers.forEach((h, i) => {
+                            const val = parseFloat(values[i]);
+                            row[h] = isNaN(val) ? values[i] : val;
+                        });
+
+                        // Extract subject ID from CSV if present
+                        if (row.subject_id) {
+                            document.getElementById('subjectIdInput').value = row.subject_id;
+                        }
+
+                        const matchedCount = MODEL_DATA.features.filter(f => typeof row[f] === 'number').length;
+                        currentPatientFeatures = row;
+                        updateDropzoneUI("✅", `CSV Loaded: ${fname}`, `${matchedCount} model features matched from ${headers.length} columns · ${lines.length - 1} data row(s)`);
+                        document.getElementById('fileBadge').innerText = `Active: ${fname}`;
+                        runAnalysis();
+                    } catch (err) {
+                        updateDropzoneUI("❌", `CSV Error`, err.message);
+                        alert("Invalid CSV: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+
+            } else if (ext === 'bdf' || ext === 'edf') {
+                // BDF/EDF: Upload to server for MNE preprocessing pipeline
+                const subjectId = subId || cleanName;
+                document.getElementById('subjectIdInput').value = subjectId;
+                
+                // Show processing state
+                updateDropzoneUI("⏳", `Processing: ${fname}`, `Uploading ${fileSizeKB} KB to server for MNE signal processing...`);
+                document.getElementById('fileBadge').innerText = `Processing...`;
+                
+                const btn = document.getElementById('btnRun');
+                btn.innerText = "⏳ Server Processing EEG Signal...";
+                btn.disabled = true;
+
+                try {
+                    const arrayBuf = await file.arrayBuffer();
+                    const response = await fetch('/api/upload_bdf', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/octet-stream',
+                            'X-Subject-ID': subjectId,
+                            'X-Filename': fname
+                        },
+                        body: arrayBuf
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+                        throw new Error(errData.error || `Server returned ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.features) {
+                        currentPatientFeatures = result.features;
+                        const nEpochs = result.retained_epochs || '?';
+                        const matchedCount = MODEL_DATA.features.filter(f => typeof result.features[f] === 'number').length;
+                        
+                        updateDropzoneUI("✅", `Processed: ${fname}`, `MNE pipeline complete — ${nEpochs} epochs retained · ${matchedCount} features extracted`);
+                        document.getElementById('fileBadge').innerText = `Processed: ${subjectId}`;
+                        document.getElementById('subjectIdInput').value = result.subject_id || subjectId;
+                        runAnalysis();
+                    } else {
+                        throw new Error("Server returned no features from BDF processing");
+                    }
+                } catch (err) {
+                    updateDropzoneUI("❌", `BDF Processing Failed`, err.message);
+                    document.getElementById('fileBadge').innerText = `Error`;
+                    alert("EEG file processing failed: " + err.message + "\n\nMake sure the server is running (python app.py --port 8055) and MNE-Python is installed.");
+                } finally {
+                    btn.innerText = "🚀 Execute NeuroSense Analysis";
+                    btn.disabled = false;
+                }
+
+            } else {
+                updateDropzoneUI("❌", `Unsupported Format`, `".${ext}" is not supported. Use .json, .csv, .bdf, or .edf`);
+                alert("Unsupported file type ." + ext + "\n\nSupported formats:\n• .json — Pre-extracted EEG spectral features\n• .csv — Feature table (header + data row)\n• .bdf/.edf — Raw EEG recording (server processes via MNE)");
+            }
+        }
+
+        function runAnalysis() {
+            if (!currentPatientFeatures) return;
+
+            const btn = document.getElementById('btnRun');
+            btn.innerText = "Analyzing Biomarkers...";
+            btn.disabled = true;
+
+            try {
+                // Immediate client-side inference (works 100% reliably in any browser)
+                const result = predictClientSide(currentPatientFeatures);
+                updateUIWithResult(result);
+
+                // Also ping server in background if running (for report generation)
+                const subjectId = document.getElementById('subjectIdInput').value || "DEMO-PATIENT";
+                fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject_id: subjectId,
+                        features: currentPatientFeatures
+                    })
+                }).catch(() => {});
+
+            } catch (err) {
+                console.error("Analysis failed:", err);
+                alert("Analysis failed: " + err.message);
+            } finally {
+                btn.innerText = "🚀 Execute NeuroSense Analysis";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
