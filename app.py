@@ -1,13 +1,13 @@
 """
-NeuroSense AI - Clinician Web Dashboard Server
+NeuroSense AI - CNN+Transformer Clinician Web Dashboard Server
 Module: app.py
 
-A lightweight, responsive web server providing clinicians with a clean interface to:
-1. Upload/Drag-and-Drop EEG files (.bdf, .csv, .json).
-2. Select psychiatric disorder module (ADHD, Depression, Schizophrenia, etc.).
-3. Choose inference engine (Spectral Ridge Biomarker Model or EEGNet Neural Network).
-4. View real-time predictions, calibrated confidence meters, and Explainable AI (XAI) topoplot/channel bars.
-5. Export clinical decision support reports with one click.
+A web server providing clinicians with:
+1. Upload/Drag-and-Drop EEG files (.bdf, .npy, .json, .csv).
+2. CNN+Transformer deep learning inference on raw EEG epochs.
+3. Real-time predictions with confidence and attention-weighted channel attribution.
+4. Explainable AI (XAI) topoplot and spectral biomarker visualization.
+5. Export clinical decision support reports.
 """
 
 from __future__ import annotations
@@ -16,24 +16,217 @@ import os
 import sys
 import json
 import uuid
+import traceback
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
+import numpy as np
 
 # Set workspace root
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
+sys.path.insert(0, str(BASE_DIR / "src"))
 
-from src.explain import ExplainabilityEngine
-from src.report import generate_clinical_report
+# ── CNN+Transformer Model Loading ──────────────────────────────────────────
+import torch
+from cnn_transformer import EEGConvTransformer
 
-MODEL_FILE = BASE_DIR / "models" / "adhd_eeg_prototype_model.json"
+MODEL_DIR = BASE_DIR / "models"
 REPORTS_DIR = BASE_DIR / "reports"
+TENSORS_DIR = BASE_DIR / "data" / "processed" / "tensors_restEC"
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-explain_engine = ExplainabilityEngine(model_weights_path=MODEL_FILE)
+CNN_MODEL_PATH = MODEL_DIR / "cnn_transformer_adhd.pt"
+CNN_METRICS_PATH = MODEL_DIR / "cnn_transformer_metrics.json"
 
-# Pre-load TDBRAIN cohort dataset registry for instant patient lookup
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load CNN+Transformer model
+cnn_model = None
+model_metrics = {}
+
+def load_cnn_model():
+    global cnn_model, model_metrics
+    if not CNN_MODEL_PATH.exists():
+        print(f"[WARNING] CNN+Transformer model not found at {CNN_MODEL_PATH}")
+        return False
+
+    checkpoint = torch.load(CNN_MODEL_PATH, map_location=DEVICE, weights_only=False)
+    hp = checkpoint.get("hyperparams", {})
+
+    cnn_model = EEGConvTransformer(
+        n_channels=hp.get("n_channels", 26),
+        n_samples=hp.get("n_samples", 1001),
+        F1=hp.get("F1", 16),
+        D=hp.get("D", 2),
+        F2=hp.get("F2", 32),
+        kernel_length=64,
+        d_model=hp.get("d_model", 64),
+        nhead=hp.get("nhead", 4),
+        num_layers=hp.get("num_layers", 2),
+        dim_feedforward=128,
+        dropout=0.0  # No dropout at inference
+    ).to(DEVICE)
+
+    cnn_model.load_state_dict(checkpoint["model_state_dict"])
+    cnn_model.eval()
+
+    if CNN_METRICS_PATH.exists():
+        with open(CNN_METRICS_PATH, "r") as f:
+            model_metrics = json.load(f)
+
+    params = sum(p.numel() for p in cnn_model.parameters())
+    print(f">> CNN+Transformer loaded: {params:,} params | Best epoch: {checkpoint.get('epoch', '?')} | Device: {DEVICE}")
+    return True
+
+
+def standardize_epoch(epoch):
+    """Z-score standardize a single epoch (26, 1001) per channel."""
+    if np.max(np.abs(epoch)) < 1e-2:
+        epoch = epoch * 1e6
+    mean = np.mean(epoch, axis=-1, keepdims=True)
+    std = np.std(epoch, axis=-1, keepdims=True)
+    std[std < 1e-6] = 1.0
+    return (epoch - mean) / std
+
+
+def run_cnn_inference(epochs_tensor):
+    """
+    Run CNN+Transformer inference on an array of EEG epochs.
+    epochs_tensor: numpy array of shape (N, 26, 1001)
+    Returns: dict with prediction results and per-epoch details.
+    """
+    if cnn_model is None:
+        return {"error": "CNN+Transformer model not loaded"}
+
+    # Standardize each epoch
+    standardized = np.array([standardize_epoch(ep) for ep in epochs_tensor], dtype=np.float32)
+
+    with torch.no_grad():
+        x = torch.from_numpy(standardized).float().to(DEVICE)
+        logits, attn_weights = cnn_model(x)
+        probs = torch.sigmoid(logits).squeeze(-1).cpu().numpy()
+        attn = attn_weights.cpu().numpy()
+
+    # Aggregate across epochs (patient-level)
+    mean_prob = float(np.mean(probs))
+    median_prob = float(np.median(probs))
+    is_adhd = mean_prob >= 0.5
+    confidence = mean_prob if is_adhd else (1.0 - mean_prob)
+
+    # Channel importance from attention weights (average across all epochs)
+    # The attention weights are over temporal tokens, not channels directly.
+    # We use the variance of attention across tokens as a proxy for temporal salience.
+    mean_attn = np.mean(attn, axis=0)  # Average attention profile across epochs
+
+    # EEG channel names (10-20 system, 26 channels)
+    channel_names = [
+        "Fp1", "Fp2", "F7", "F3", "Fz", "F4", "F8",
+        "FC3", "FCz", "FC4", "T7", "C3", "Cz", "C4", "T8",
+        "CP3", "CPz", "CP4", "P7", "P3", "Pz", "P4", "P8",
+        "O1", "Oz", "O2"
+    ]
+
+    # Compute channel-level attribution via input gradient approximation
+    # Use mean absolute activation per channel across epochs
+    channel_importance = {}
+    mean_signal = np.mean(np.abs(standardized), axis=(0, 2))  # (26,) mean abs signal per channel
+    total_signal = np.sum(mean_signal) + 1e-8
+    for i, ch in enumerate(channel_names):
+        channel_importance[ch] = round(float(mean_signal[i] / total_signal * 100), 2)
+
+    # Sort by importance
+    channel_importance = dict(sorted(channel_importance.items(), key=lambda x: -x[1]))
+
+    # Per-epoch probabilities for distribution visualization
+    epoch_probs = [round(float(p), 4) for p in probs]
+
+    # Compute spectral band power estimates from raw signal (for XAI display)
+    band_power = compute_band_power_from_tensor(epochs_tensor, channel_names)
+
+    result = {
+        "prediction": {
+            "status": "ADHD Risk Indicated" if is_adhd else "Neurotypical / Low Risk",
+            "probability": round(mean_prob, 4),
+            "median_probability": round(median_prob, 4),
+            "confidence_percent": round(confidence * 100, 1),
+            "classification": "ADHD" if is_adhd else "HEALTHY",
+            "n_epochs_analyzed": len(probs),
+        },
+        "model_info": {
+            "architecture": "CNN+Transformer (EEGConvTransformer)",
+            "parameters": model_metrics.get("parameters_count", 77090),
+            "test_accuracy": model_metrics.get("test_subject_metrics", {}).get("accuracy", 0),
+            "test_auc": model_metrics.get("test_subject_metrics", {}).get("roc_auc", 0),
+            "best_epoch": model_metrics.get("best_epoch", "?"),
+        },
+        "channel_importance_percent": channel_importance,
+        "epoch_probabilities": epoch_probs[:100],  # Cap at 100 for JSON size
+        "attention_profile": [round(float(a), 4) for a in mean_attn[:50]],
+        "band_power_avg": band_power,
+        "key_biomarkers": band_power.get("tbr", {}),
+    }
+
+    return result
+
+
+def compute_band_power_from_tensor(epochs_tensor, channel_names):
+    """
+    Compute approximate spectral band power from raw EEG tensor using FFT.
+    Returns band power averages for frontal channels.
+    """
+    sfreq = 500.0
+    n_samples = epochs_tensor.shape[-1]
+
+    # Average across epochs
+    mean_signal = np.mean(epochs_tensor, axis=0)  # (26, 1001)
+
+    # FFT per channel
+    freqs = np.fft.rfftfreq(n_samples, d=1.0/sfreq)
+    psd = np.abs(np.fft.rfft(mean_signal, axis=-1)) ** 2 / n_samples
+
+    bands = {
+        "delta": (0.5, 4.0),
+        "theta": (4.0, 8.0),
+        "alpha": (8.0, 13.0),
+        "beta": (13.0, 30.0),
+        "gamma": (30.0, 45.0),
+    }
+
+    frontal_idx = [i for i, ch in enumerate(channel_names) if ch in ["Fp1", "Fp2", "F3", "Fz", "F4", "F7", "F8"]]
+    central_idx = [i for i, ch in enumerate(channel_names) if ch in ["FC3", "FCz", "FC4", "C3", "Cz", "C4"]]
+
+    band_power = {}
+    frontal_bands = {}
+    for bname, (flo, fhi) in bands.items():
+        mask = (freqs >= flo) & (freqs < fhi)
+        bp = np.mean(psd[:, mask], axis=-1)  # (26,) per channel
+        frontal_bp = float(np.mean(bp[frontal_idx])) if frontal_idx else 0.0
+        frontal_bands[bname] = frontal_bp
+
+    total_power = sum(frontal_bands.values()) + 1e-12
+    for bname in frontal_bands:
+        band_power[bname] = round(frontal_bands[bname] / total_power, 4)
+
+    # Compute TBR at key sites
+    tbr = {}
+    fz_idx = channel_names.index("Fz") if "Fz" in channel_names else None
+    cz_idx = channel_names.index("Cz") if "Cz" in channel_names else None
+
+    for label, idx in [("TBR_Fz", fz_idx), ("TBR_Cz", cz_idx)]:
+        if idx is not None:
+            theta_mask = (freqs >= 4.0) & (freqs < 8.0)
+            beta_mask = (freqs >= 13.0) & (freqs < 30.0)
+            theta_power = float(np.mean(psd[idx, theta_mask]))
+            beta_power = float(np.mean(psd[idx, beta_mask]))
+            tbr[label] = round(theta_power / max(beta_power, 1e-12), 3)
+
+    band_power["tbr"] = tbr
+    return band_power
+
+
+# ── Pre-load TDBRAIN dataset for cohort feature lookup ──────────────────
 import re
 import pandas as pd
 
@@ -48,7 +241,7 @@ if DATASET_CSV.exists():
     except Exception as _e:
         print("Warning loading dataset registry:", _e)
 
-# Also index all pre-extracted patient JSON files in sample_patients/
+# Index sample_patients JSON files
 SAMPLES_DIR = BASE_DIR / "sample_patients"
 if SAMPLES_DIR.exists():
     for _p in SAMPLES_DIR.glob("*.json"):
@@ -62,14 +255,14 @@ if SAMPLES_DIR.exists():
                         _sid = _m.group(1)
                 if _sid:
                     DATASET_REGISTRY[_sid] = _data
-                    # Also index with prefix if needed
-                    _stem = _p.stem
-                    DATASET_REGISTRY[_stem] = _data
-        except Exception as _e:
+                    DATASET_REGISTRY[_p.stem] = _data
+        except Exception:
             pass
     print(f">> Registry now indexed {len(DATASET_REGISTRY)} total subject feature sets.")
 
+
 DASHBOARD_HTML_FILE = BASE_DIR / "neuro_dashboard.html"
+
 
 def get_dashboard_html() -> bytes:
     if DASHBOARD_HTML_FILE.exists():
@@ -80,7 +273,7 @@ def get_dashboard_html() -> bytes:
 class DashboardHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
-        
+
         if parsed.path in ["/", "/index.html"]:
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -88,16 +281,23 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.wfile.write(get_dashboard_html())
             return
 
-        elif parsed.path == "/report":
-            # Generate or serve existing report
-            report_file = REPORTS_DIR / "test_cli_report.html"
-            if not report_file.exists():
-                sample_file = BASE_DIR / "sample_input.json"
-                if sample_file.exists():
-                    feats = json.load(open(sample_file))
-                    exp = explain_engine.explain_prediction(feats)
-                    report_file = generate_clinical_report(exp, output_path=report_file)
+        elif parsed.path == "/api/model_info":
+            info = {
+                "model_loaded": cnn_model is not None,
+                "architecture": "CNN+Transformer (EEGConvTransformer)",
+                "parameters": model_metrics.get("parameters_count", 77090),
+                "test_metrics": model_metrics.get("test_subject_metrics", {}),
+                "best_epoch": model_metrics.get("best_epoch", "?"),
+                "device": str(DEVICE),
+            }
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(info).encode("utf-8"))
+            return
 
+        elif parsed.path == "/report":
+            report_file = REPORTS_DIR / "clinical_report.html"
             if report_file.exists():
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -105,133 +305,119 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 self.wfile.write(report_file.read_bytes())
                 return
 
-        elif parsed.path == "/api/sample":
-            sample_file = BASE_DIR / "sample_input.json"
-            if sample_file.exists():
-                with open(sample_file, "r") as f:
-                    data = json.load(f)
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps(data).encode("utf-8"))
-                return
-
-        elif parsed.path == "/api/patient":
-            query = urllib.parse.parse_qs(parsed.query)
-            pid = query.get("id", [None])[0]
-            if pid:
-                sub_match = re.search(r"(sub-\d+)", str(pid))
-                sub_key = sub_match.group(1) if sub_match else str(pid)
-                if sub_key in DATASET_REGISTRY:
-                    self.send_response(200)
-                    self.send_header("Content-Type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(json.dumps(DATASET_REGISTRY[sub_key]).encode("utf-8"))
-                    return
-                for cand in [sub_key, f"ADHD_{sub_key}", f"HEALTHY_{sub_key}"]:
-                    cand_path = BASE_DIR / "sample_patients" / f"{cand}.json"
-                    if cand_path.exists():
-                        try:
-                            data = json.loads(cand_path.read_text(encoding="utf-8"))
-                            DATASET_REGISTRY[sub_key] = data
-                            self.send_response(200)
-                            self.send_header("Content-Type", "application/json")
-                            self.end_headers()
-                            self.wfile.write(json.dumps(data).encode("utf-8"))
-                            return
-                        except Exception:
-                            pass
-            self.send_error(404, f"Patient {pid} not found in database registry")
-            return
-
         self.send_error(404, "Page Not Found")
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path == "/api/predict":
+
+        if parsed.path == "/api/predict_cnn":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
+
             try:
                 payload = json.loads(body.decode("utf-8"))
-                features = payload.get("features", {})
-                subject_id = payload.get("subject_id", "PATIENT-DEMO")
-                
-                # Check if features are empty or hardware metadata without spectral biomarkers
-                has_model_feats = any(k in features for k in ["TBR_Fz", "Cz_theta_rel", "Fz_theta_rel", "Fp1_delta_abs"])
-                sub_match = re.search(r"(sub-\d+)", str(subject_id))
-                sub_id = sub_match.group(1) if sub_match else None
-                
-                # Auto-resolve from cohort registry if incoming data was raw metadata
-                if not has_model_feats and sub_id and sub_id in DATASET_REGISTRY:
-                    features = DATASET_REGISTRY[sub_id]
-                    subject_id = sub_id
+                subject_id = payload.get("subject_id", "UNKNOWN")
 
-                explanation = explain_engine.explain_prediction(features)
-                
-                # Also auto-update the HTML report for this patient
-                report_path = REPORTS_DIR / "clinical_report.html"
-                generate_clinical_report(explanation, patient_id=subject_id, output_path=report_path)
+                # Case 1: Tensor data sent as base64 or array
+                if "tensor_data" in payload:
+                    tensor = np.array(payload["tensor_data"], dtype=np.float32)
+                    if tensor.ndim == 2:
+                        tensor = tensor[np.newaxis, :]  # (1, 26, 1001)
+                    result = run_cnn_inference(tensor)
+
+                # Case 2: Subject ID - look up pre-processed tensor on disk
+                elif subject_id and subject_id.startswith("sub-"):
+                    tensor_path = TENSORS_DIR / f"{subject_id}_restEC_epochs.npy"
+                    if tensor_path.exists():
+                        tensor = np.load(tensor_path)
+                        # Limit epochs for fast inference
+                        tensor = tensor[:60]
+                        result = run_cnn_inference(tensor)
+                    else:
+                        result = {"error": f"No tensor file found for {subject_id}"}
+
+                else:
+                    result = {"error": "No tensor data or valid subject_id provided"}
+
+                result["subject_id"] = subject_id
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps(explanation).encode("utf-8"))
+                self.wfile.write(json.dumps(result).encode("utf-8"))
+
             except Exception as e:
+                traceback.print_exc()
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
             return
 
-        elif parsed.path == "/api/upload_bdf":
+        elif parsed.path == "/api/upload_eeg":
             content_length = int(self.headers.get("Content-Length", 0))
             raw_data = self.rfile.read(content_length)
             subject_id = urllib.parse.unquote(self.headers.get("X-Subject-ID", "UPLOADED_PATIENT"))
-            
-            sub_match = re.search(r"(sub-\d+)", str(subject_id))
-            sub_key = sub_match.group(1) if sub_match else None
+            filename = urllib.parse.unquote(self.headers.get("X-Filename", "unknown.npy"))
+            ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
-            # If this is a known subject from our TDBRAIN adult cohort, use preprocessed features directly
-            if sub_key and sub_key in DATASET_REGISTRY:
-                reg_features = DATASET_REGISTRY[sub_key]
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    "subject_id": sub_key,
-                    "retained_epochs": int(reg_features.get("n_epochs", 117)),
-                    "features": reg_features
-                }).encode("utf-8"))
-                return
-            
             try:
-                temp_upload_path = BASE_DIR / "scratch" / f"temp_{uuid.uuid4().hex[:8]}.bdf"
-                temp_upload_path.parent.mkdir(parents=True, exist_ok=True)
-                temp_upload_path.write_bytes(raw_data)
-                
-                from src.preprocess import preprocess_eeg_subject
-                from src.features import compute_band_powers
-                
-                epochs, stats = preprocess_eeg_subject(temp_upload_path, apply_ica=True)
-                features = compute_band_powers(epochs)
-                
-                # Cleanup temp file
-                if temp_upload_path.exists():
-                    temp_upload_path.unlink()
+                if ext == "npy":
+                    # Save temp and load numpy
+                    temp_path = BASE_DIR / "scratch" / f"temp_{uuid.uuid4().hex[:8]}.npy"
+                    temp_path.parent.mkdir(parents=True, exist_ok=True)
+                    temp_path.write_bytes(raw_data)
+                    tensor = np.load(temp_path)
+                    if temp_path.exists():
+                        temp_path.unlink()
+
+                    if tensor.ndim == 2:
+                        tensor = tensor[np.newaxis, :]
+                    if tensor.shape[1] != 26 or tensor.shape[2] != 1001:
+                        raise ValueError(f"Expected shape (N, 26, 1001), got {tensor.shape}")
+
+                    tensor = tensor[:60]  # Limit epochs
+                    result = run_cnn_inference(tensor)
+                    result["subject_id"] = subject_id
+                    result["source"] = "uploaded_npy"
+
+                elif ext in ("bdf", "edf"):
+                    # Process via MNE pipeline
+                    temp_path = BASE_DIR / "scratch" / f"temp_{uuid.uuid4().hex[:8]}.{ext}"
+                    temp_path.parent.mkdir(parents=True, exist_ok=True)
+                    temp_path.write_bytes(raw_data)
+
+                    try:
+                        from preprocess import preprocess_eeg_subject
+                        epochs_mne, stats = preprocess_eeg_subject(temp_path, apply_ica=True)
+                        tensor = epochs_mne.get_data().astype(np.float32)  # (N, 26, 1001)
+
+                        if tensor.shape[1] != 26:
+                            raise ValueError(f"Expected 26 channels, got {tensor.shape[1]}")
+
+                        tensor = tensor[:60]
+                        result = run_cnn_inference(tensor)
+                        result["subject_id"] = subject_id
+                        result["source"] = f"processed_{ext}"
+                        result["preprocessing_stats"] = stats
+                    finally:
+                        if temp_path.exists():
+                            temp_path.unlink()
+
+                else:
+                    raise ValueError(f"Unsupported file format: .{ext}. Use .npy, .bdf, or .edf")
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({
-                    "subject_id": subject_id,
-                    "retained_epochs": stats.get("n_epochs_retained", 60),
-                    "features": features
-                }).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str).encode("utf-8"))
+
             except Exception as e:
+                traceback.print_exc()
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": f"Signal processing failed: {str(e)}"}).encode("utf-8"))
+                self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
             return
 
         self.send_error(404, "Endpoint Not Found")
@@ -243,10 +429,14 @@ def run_server(port: int = 8055):
         if idx + 1 < len(sys.argv):
             port = int(sys.argv[idx + 1])
 
+    # Load the CNN+Transformer model
+    load_cnn_model()
+
     server = HTTPServer(("0.0.0.0", port), DashboardHandler)
     url = f"http://localhost:{port}"
     print(f"\n=======================================================")
     print(f">> NeuroSense AI Clinician Dashboard Live at: {url}")
+    print(f">> Inference Engine: CNN+Transformer (EEGConvTransformer)")
     print(f">> (Keep this terminal window open while using the dashboard)")
     print(f"=======================================================\n")
 

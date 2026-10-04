@@ -1,0 +1,593 @@
+{
+  "model_name": "CNN_Transformer_EEG_ADHD",
+  "timestamp": "2026-10-04 18:54:40",
+  "training_duration_seconds": 1167.37,
+  "epochs_trained": 20,
+  "best_epoch": 12,
+  "parameters_count": 77090,
+  "test_subject_metrics": {
+    "accuracy": 0.8222222222222222,
+    "balanced_accuracy": 0.8060344827586207,
+    "sensitivity": 0.75,
+    "specificity": 0.8620689655172413,
+    "precision": 0.75,
+    "f1_score": 0.75,
+    "roc_auc": 0.8232758620689655,
+    "tp": 12,
+    "tn": 25,
+    "fp": 4,
+    "fn": 4
+  },
+  "test_epoch_metrics": {
+    "accuracy": 0.74187832250443,
+    "balanced_accuracy": 0.7272309769705603,
+    "sensitivity": 0.6671875,
+    "specificity": 0.7872744539411206,
+    "precision": 0.6559139784946236,
+    "f1_score": 0.6615027110766847,
+    "roc_auc": 0.7736214981006647,
+    "tp": 427,
+    "tn": 829,
+    "fp": 224,
+    "fn": 213
+  },
+  "validation_history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.8632,
+      "val_epoch_acc": 67.42,
+      "val_epoch_auc": 0.7602,
+      "val_subject_acc": 67.65,
+      "val_subject_bal_acc": 67.42,
+      "val_subject_auc": 0.7992,
+      "val_subject_sens": 66.67,
+      "val_subject_spec": 68.18,
+      "lr": 0.000497
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.66,
+      "val_epoch_acc": 71.5,
+      "val_epoch_auc": 0.7404,
+      "val_subject_acc": 76.47,
+      "val_subject_bal_acc": 72.35,
+      "val_subject_auc": 0.7803,
+      "val_subject_sens": 58.33,
+      "val_subject_spec": 86.36,
+      "lr": 0.000488
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5422,
+      "val_epoch_acc": 74.0,
+      "val_epoch_auc": 0.7745,
+      "val_subject_acc": 79.41,
+      "val_subject_bal_acc": 76.52,
+      "val_subject_auc": 0.8409,
+      "val_subject_sens": 66.67,
+      "val_subject_spec": 86.36,
+      "lr": 0.000473
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.4813,
+      "val_epoch_acc": 72.03,
+      "val_epoch_auc": 0.7406,
+      "val_subject_acc": 82.35,
+      "val_subject_bal_acc": 80.68,
+      "val_subject_auc": 0.7879,
+      "val_subject_sens": 75.0,
+      "val_subject_spec": 86.36,
+      "lr": 0.000452
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.4394,
+      "val_epoch_acc": 74.07,
+      "val_epoch_auc": 0.7835,
+      "val_subject_acc": 79.41,
+      "val_subject_bal_acc": 76.52,
+      "val_subject_auc": 0.8447,
+      "val_subject_sens": 66.67,
+      "val_subject_spec": 86.36,
+      "lr": 0.000427
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.3852,
+      "val_epoch_acc": 70.22,
+      "val_epoch_auc": 0.7822,
+      "val_subject_acc": 73.53,
+      "val_subject_bal_acc": 73.86,
+      "val_subject_auc": 0.8409,
+      "val_subject_sens": 75.0,
+      "val_subject_spec": 72.73,
+      "lr": 0.000397
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.3445,
+      "val_epoch_acc": 74.68,
+      "val_epoch_auc": 0.8108,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 82.95,
+      "val_subject_auc": 0.8636,
+      "val_subject_sens": 75.0,
+      "val_subject_spec": 90.91,
+      "lr": 0.000364
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.3197,
+      "val_epoch_acc": 72.03,
+      "val_epoch_auc": 0.8287,
+      "val_subject_acc": 82.35,
+      "val_subject_bal_acc": 82.58,
+      "val_subject_auc": 0.8864,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 81.82,
+      "lr": 0.000328
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.2918,
+      "val_epoch_acc": 74.07,
+      "val_epoch_auc": 0.8417,
+      "val_subject_acc": 76.47,
+      "val_subject_bal_acc": 78.03,
+      "val_subject_auc": 0.9091,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 72.73,
+      "lr": 0.00029
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.2706,
+      "val_epoch_acc": 76.49,
+      "val_epoch_auc": 0.8558,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 84.85,
+      "val_subject_auc": 0.928,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 86.36,
+      "lr": 0.000251
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.2462,
+      "val_epoch_acc": 78.68,
+      "val_epoch_auc": 0.8511,
+      "val_subject_acc": 88.24,
+      "val_subject_bal_acc": 87.12,
+      "val_subject_auc": 0.9015,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 90.91,
+      "lr": 0.000211
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.2201,
+      "val_epoch_acc": 78.53,
+      "val_epoch_auc": 0.8583,
+      "val_subject_acc": 82.35,
+      "val_subject_bal_acc": 80.68,
+      "val_subject_auc": 0.9356,
+      "val_subject_sens": 75.0,
+      "val_subject_spec": 86.36,
+      "lr": 0.000173
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.2124,
+      "val_epoch_acc": 78.61,
+      "val_epoch_auc": 0.8498,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 82.95,
+      "val_subject_auc": 0.9091,
+      "val_subject_sens": 75.0,
+      "val_subject_spec": 90.91,
+      "lr": 0.000137
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.2182,
+      "val_epoch_acc": 77.63,
+      "val_epoch_auc": 0.8614,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 86.74,
+      "val_subject_auc": 0.9205,
+      "val_subject_sens": 91.67,
+      "val_subject_spec": 81.82,
+      "lr": 0.000104
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.1838,
+      "val_epoch_acc": 78.0,
+      "val_epoch_auc": 0.8602,
+      "val_subject_acc": 82.35,
+      "val_subject_bal_acc": 82.58,
+      "val_subject_auc": 0.9318,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 81.82,
+      "lr": 7.4e-05
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.1696,
+      "val_epoch_acc": 78.91,
+      "val_epoch_auc": 0.86,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 84.85,
+      "val_subject_auc": 0.9318,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 86.36,
+      "lr": 4.9e-05
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.1882,
+      "val_epoch_acc": 78.08,
+      "val_epoch_auc": 0.8598,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 84.85,
+      "val_subject_auc": 0.9318,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 86.36,
+      "lr": 2.8e-05
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.2017,
+      "val_epoch_acc": 78.16,
+      "val_epoch_auc": 0.8581,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 84.85,
+      "val_subject_auc": 0.928,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 86.36,
+      "lr": 1.3e-05
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.1862,
+      "val_epoch_acc": 77.78,
+      "val_epoch_auc": 0.8564,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 84.85,
+      "val_subject_auc": 0.928,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 86.36,
+      "lr": 4e-06
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.1842,
+      "val_epoch_acc": 78.0,
+      "val_epoch_auc": 0.8572,
+      "val_subject_acc": 85.29,
+      "val_subject_bal_acc": 84.85,
+      "val_subject_auc": 0.928,
+      "val_subject_sens": 83.33,
+      "val_subject_spec": 86.36,
+      "lr": 1e-06
+    }
+  ],
+  "test_patient_predictions": {
+    "sub-88041081": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.1589,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-88005441": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.7719,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88041257": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.8882,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88023213": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.9131,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88022677": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.9331,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88067449": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.8428,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88040317": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.6565,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88018673": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.9202,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88051837": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.0163,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-88061829": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.9964,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88059305": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.583,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88030729": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.8375,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88064749": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.6259,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88053137": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.8781,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-88028433": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.257,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-88046753": {
+      "ground_truth": 1,
+      "diagnosis": "ADHD",
+      "predicted_prob": 0.2629,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87980373": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.465,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87960933": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0194,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-88053453": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.9967,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-87959137": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.816,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-87971381": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0921,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87958601": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0029,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87962381": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0912,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87959861": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.1345,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87962961": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0729,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87958285": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0013,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 10
+    },
+    "sub-87959589": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.2596,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87964445": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0388,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-88058001": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.3934,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 25
+    },
+    "sub-87961841": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0257,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-88041941": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.9978,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-87961797": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0024,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87959093": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0255,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 17
+    },
+    "sub-87961929": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0258,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87980329": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0804,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87959857": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.1101,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87959765": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0881,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87974617": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.4657,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87960125": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0151,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87976773": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.2074,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87961073": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0253,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87959273": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0552,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    },
+    "sub-87961653": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.295,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 1
+    },
+    "sub-88041893": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.669,
+      "predicted_class": "ADHD",
+      "n_epochs": 40
+    },
+    "sub-87963145": {
+      "ground_truth": 0,
+      "diagnosis": "HEALTHY",
+      "predicted_prob": 0.0051,
+      "predicted_class": "HEALTHY",
+      "n_epochs": 40
+    }
+  }
+}
