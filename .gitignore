@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Large dataset (encrypted TDBRAIN — too large for GitHub)
+TDBRAIN_Dataset_V3_1_Encr/
+
+# Processed data (can be regenerated)
+data/processed/tensors_restEC/
+data/processed/*.csv
+
+# Temporary files
+scratch/temp_*
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Reports (generated)
+reports/*.html

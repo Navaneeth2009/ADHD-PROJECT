@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroSense AI - CNN+Transformer EEG ADHD Diagnostic Dashboard</title>
+    <meta name="description" content="Clinical Decision Support System for ADHD screening using CNN+Transformer deep learning on EEG data">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-card: rgba(18, 26, 44, 0.7);
+            --bg-card-solid: #121a2c;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.35);
+            --accent-cyan: #06b6d4;
+            --accent-violet: #8b5cf6;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; }
+
+        body {
+            background-color: var(--bg-base);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.05) 0px, transparent 60%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px 20px;
+        }
+
+        .container { max-width: 1280px; margin: 0 auto; }
+
+        /* ── Header ── */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 20px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 24px;
+        }
+        .brand-logo { display: flex; align-items: center; gap: 14px; }
+        .logo-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--accent-violet));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; box-shadow: 0 0 24px var(--primary-glow);
+        }
+        .brand-title h1 {
+            font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #fff, #a5b4fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .brand-title p { font-size: 13px; color: var(--text-muted); }
+        .header-badges { display: flex; gap: 8px; align-items: center; }
+        .badge-pill {
+            display: inline-block; padding: 6px 14px; border-radius: 9999px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-model {
+            background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: #c4b5fd;
+        }
+        .badge-proto {
+            background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #93c5fd;
+        }
+
+        /* ── Grid Layout ── */
+        .grid-layout { display: grid; grid-template-columns: 400px 1fr; gap: 24px; }
+        @media (max-width: 960px) { .grid-layout { grid-template-columns: 1fr; } }
+
+        .card {
+            background: var(--bg-card); backdrop-filter: blur(16px);
+            border: 1px solid var(--border-subtle); border-radius: 16px;
+            padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .card-header {
+            font-size: 14px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 18px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* ── Model Info Badge ── */
+        .model-badge {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.12));
+            border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 12px;
+            padding: 14px 16px; margin-bottom: 18px;
+        }
+        .model-badge-title { font-size: 12px; font-weight: 700; color: #c4b5fd; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .model-badge-info { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+        .model-badge-info span { color: #e2e8f0; font-weight: 600; }
+
+        /* ── Form ── */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #d1d5db; margin-bottom: 6px; }
+        select, input[type="text"] {
+            width: 100%; background: rgba(11, 15, 25, 0.8); border: 1px solid rgba(255,255,255,0.12);
+            padding: 11px 14px; border-radius: 10px; color: #fff; font-size: 14px; outline: none;
+            transition: border-color 0.2s;
+        }
+        select:focus, input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+
+        /* ── Upload Zone ── */
+        .upload-zone {
+            border: 2px dashed rgba(139, 92, 246, 0.35); background: rgba(139, 92, 246, 0.04);
+            border-radius: 14px; padding: 32px 20px; text-align: center;
+            cursor: pointer; transition: all 0.25s ease; margin-bottom: 16px; position: relative;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-violet); background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        .upload-zone.success { border-color: var(--success); background: rgba(16, 185, 129, 0.06); }
+        .upload-zone.error { border-color: var(--danger); background: rgba(239, 68, 68, 0.06); }
+        .upload-zone.processing { border-color: var(--warning); background: rgba(245, 158, 11, 0.06); }
+        .upload-icon { font-size: 36px; margin-bottom: 10px; }
+        .upload-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+        .upload-sub { font-size: 12px; color: var(--text-muted); }
+        .file-input-hidden { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+        .file-badge {
+            font-size: 11px; color: var(--text-muted); padding: 4px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 14px;
+        }
+
+        /* ── Buttons ── */
+        .btn-run {
+            width: 100%; color: #fff; border: none; padding: 14px 20px; border-radius: 12px;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+        }
+        .btn-run:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(124, 58, 237, 0.5); }
+        .btn-run:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .btn-export {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle);
+            color: #fff; padding: 10px 16px; border-radius: 10px;
+            font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-export:hover { background: rgba(255,255,255,0.15); }
+
+        /* ── Results Panel ── */
+        .results-panel { display: flex; flex-direction: column; gap: 20px; }
+        .results-placeholder {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 300px; text-align: center;
+            color: var(--text-muted);
+        }
+        .results-placeholder .placeholder-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .results-placeholder h3 { font-size: 18px; font-weight: 700; color: #cbd5e1; margin-bottom: 8px; }
+        .results-placeholder p { font-size: 13px; max-width: 320px; line-height: 1.6; }
+
+        /* ── Status Banner ── */
+        .status-banner {
+            border-radius: 14px; padding: 22px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid transparent; animation: bannerSlideIn 0.4s ease;
+        }
+        @keyframes bannerSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .status-banner.adhd { background: var(--danger-bg); border-color: rgba(239, 68, 68, 0.4); }
+        .status-banner.healthy { background: var(--success-bg); border-color: rgba(16, 185, 129, 0.4); }
+        .status-left h3 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+        .status-banner.adhd .status-left h3 { color: #f87171; }
+        .status-banner.healthy .status-left h3 { color: #34d399; }
+        .status-left p { font-size: 13px; color: #d1d5db; }
+        .status-right { text-align: right; }
+        .confidence-number { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+        .status-banner.adhd .confidence-number { color: #f87171; }
+        .status-banner.healthy .confidence-number { color: #34d399; }
+        .confidence-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+
+        /* ── Metric Tiles ── */
+        .metric-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        @media (max-width: 960px) { .metric-tiles { grid-template-columns: repeat(2, 1fr); } }
+        .metric-tile {
+            background: rgba(11, 15, 25, 0.6); border: 1px solid var(--border-subtle);
+            border-radius: 12px; padding: 14px 16px;
+        }
+        .metric-tile-title { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+        .metric-tile-val { font-size: 20px; font-weight: 700; color: #fff; }
+        .metric-tile-desc { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+
+        /* ── Scalp Map ── */
+        .scalp-map-container { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .scalp-svg { width: 100%; max-width: 300px; height: auto; }
+        .scalp-electrode { cursor: pointer; transition: all 0.25s ease; filter: drop-shadow(0 0 3px rgba(0,0,0,0.4)); }
+        .scalp-electrode:hover { filter: drop-shadow(0 0 8px rgba(59,130,246,0.8)) brightness(1.3); }
+        .scalp-label { font-size: 8px; fill: #e2e8f0; font-weight: 700; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+        .scalp-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 11px; color: var(--text-muted); }
+        .scalp-legend-bar { width: 140px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #1e3a5f, #2563eb, #06b6d4, #f59e0b, #ef4444); }
+        .scalp-tooltip {
+            position: absolute; background: rgba(15,23,42,0.95); border: 1px solid rgba(59,130,246,0.4);
+            border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #e2e8f0;
+            pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100;
+            white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        .scalp-tooltip.visible { opacity: 1; }
+
+        /* ── Channel Bars ── */
+        .channel-row { margin-bottom: 10px; }
+        .channel-label-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #e2e8f0; }
+        .channel-bar-bg { background: rgba(255,255,255,0.08); border-radius: 999px; height: 8px; overflow: hidden; }
+        .channel-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #7c3aed, #3b82f6);
+            border-radius: 999px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── Epoch Distribution ── */
+        .epoch-dist { display: flex; gap: 2px; align-items: flex-end; height: 60px; margin-top: 8px; }
+        .epoch-bar {
+            flex: 1; background: var(--primary); border-radius: 2px 2px 0 0;
+            transition: height 0.4s ease, background 0.3s;
+            min-width: 2px; max-width: 6px;
+        }
+        .epoch-bar.adhd { background: #f87171; }
+        .epoch-bar.healthy { background: #34d399; }
+
+        /* ── Band Power ── */
+        .band-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .band-name { width: 70px; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+        .band-track { flex: 1; height: 20px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden; }
+        .band-fill { height: 100%; border-radius: 6px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+        /* ── TBR Gauge ── */
+        .tbr-gauge-item { position: relative; margin-bottom: 28px; }
+        .tbr-gauge-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #e2e8f0; margin-bottom: 6px; }
+        .tbr-gauge-track {
+            height: 24px; border-radius: 8px; position: relative; overflow: visible;
+            background: linear-gradient(90deg, rgba(16,185,129,0.3) 0%, rgba(16,185,129,0.3) 50%, rgba(245,158,11,0.3) 50%, rgba(245,158,11,0.3) 75%, rgba(239,68,68,0.3) 75%, rgba(239,68,68,0.3) 100%);
+        }
+        .tbr-gauge-needle {
+            position: absolute; top: -4px; width: 4px; height: 32px;
+            background: #fff; border-radius: 2px; box-shadow: 0 0 8px rgba(255,255,255,0.6);
+            transition: left 0.6s cubic-bezier(0.4,0,0.2,1); z-index: 2;
+        }
+        .tbr-gauge-value-tag {
+            position: absolute; top: -22px; transform: translateX(-50%);
+            background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.2);
+            padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;
+            color: #fff; white-space: nowrap; z-index: 3;
+        }
+        .tbr-gauge-zones { position: absolute; bottom: -16px; left: 0; right: 0; display: flex; font-size: 9px; color: var(--text-muted); }
+        .tbr-gauge-zones span { text-align: center; }
+
+        /* ── XAI Tabs ── */
+        .xai-tab-bar {
+            display: flex; gap: 4px; margin-bottom: 16px;
+            background: rgba(11,15,25,0.6); border-radius: 10px; padding: 4px; border: 1px solid var(--border-subtle);
+        }
+        .xai-tab {
+            flex: 1; padding: 8px 10px; text-align: center; font-size: 12px; font-weight: 600;
+            color: var(--text-muted); border-radius: 8px; cursor: pointer; transition: all 0.2s; border: none; background: none;
+        }
+        .xai-tab:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
+        .xai-tab.active { background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.2)); color: #fff; box-shadow: 0 2px 8px rgba(124,58,237,0.2); }
+        .xai-tab-content { display: none; }
+        .xai-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .xai-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 12px; }
+
+        /* ── Disclaimer ── */
+        .disclaimer-box {
+            font-size: 11px; color: #9ca3af;
+            background: rgba(245,158,11,0.05); border-left: 3px solid #f59e0b;
+            padding: 12px 14px; border-radius: 6px; line-height: 1.5;
+        }
+
+        /* ── Loading Spinner ── */
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Pulse animation ── */
+        @keyframes valuePulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); filter: brightness(1.4); } 100% { transform: scale(1); } }
+        .value-pulse { animation: valuePulse 0.5s ease-in-out; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand-logo">
+                <div class="logo-icon">&#x1F9E0;</div>
+                <div class="brand-title">
+                    <h1>NeuroSense AI</h1>
+                    <p>Clinical Decision Support &mdash; CNN+Transformer Deep Learning</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge-pill badge-model">CNN+Transformer</span>
+                <span class="badge-pill badge-proto">TDBRAIN 10-20 EEG</span>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="grid-layout">
+            <!-- Left Panel: Upload & Config -->
+            <div>
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header">&#x26A1; EEG Upload &amp; Analysis</div>
+
+                    <!-- Model Info -->
+                    <div class="model-badge">
+                        <div class="model-badge-title">&#x1F916; Active Inference Engine</div>
+                        <div class="model-badge-info">
+                            <span>EEGConvTransformer</span> &mdash; Hybrid CNN + Transformer<br>
+                            77,090 parameters &bull; 26ch &times; 2s epochs @ 500Hz<br>
+                            Test Accuracy: <span>82.2%</span> &bull; ROC-AUC: <span>0.823</span>
+                        </div>
+                    </div>
+
+                    <!-- Subject ID -->
+                    <div class="form-group">
+                        <label class="form-label">Subject / Patient Identifier</label>
+                        <input type="text" id="subjectIdInput" value="" placeholder="e.g. sub-88006297 or Patient-001">
+                    </div>
+
+                    <!-- Upload Zone -->
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" class="file-input-hidden" id="fileInput"
+                               accept=".npy,.bdf,.edf,.json,.csv"
+                               onchange="handleFileSelect(event)">
+                        <div class="upload-icon" id="uploadIcon">&#x1F4C2;</div>
+                        <div class="upload-title" id="uploadTitle">Upload EEG Recording</div>
+                        <div class="upload-sub" id="uploadSub">
+                            Drag &amp; drop or click &mdash; .npy (tensor), .bdf/.edf (raw EEG), .json, .csv
+                        </div>
+                    </div>
+
+                    <div class="file-badge">
+                        <span id="fileBadge">No file selected</span>
+                        <span id="fileStatus"></span>
+                    </div>
+
+                    <button class="btn-run" id="btnRun" onclick="runAnalysis()">
+                        &#x1F680; Run CNN+Transformer Analysis
+                    </button>
+                </div>
+
+                <!-- Disclaimer -->
+                <div class="disclaimer-box">
+                    <strong>CLINICAL DECISION SUPPORT NOTICE:</strong> NeuroSense AI is an assistive
+                    decision-support tool. It provides quantitative biomarker risk estimations and does
+                    not substitute professional clinical psychiatric diagnostic judgment.
+                </div>
+            </div>
+
+            <!-- Right Panel: Results -->
+            <div class="results-panel" id="resultsPanel">
+                <!-- Placeholder (before analysis) -->
+                <div class="card results-placeholder" id="placeholderCard">
+                    <div class="placeholder-icon">&#x1F9EC;</div>
+                    <h3>Awaiting EEG Upload</h3>
+                    <p>Upload an EEG file (.npy tensor, .bdf raw recording, or feature file) to run CNN+Transformer ADHD diagnostic analysis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results template (hidden, cloned after analysis) -->
+    <template id="resultsTemplate">
+        <!-- Status Banner -->
+        <div class="status-banner healthy" id="statusBanner">
+            <div class="status-left">
+                <h3 id="resultStatus">Analyzing...</h3>
+                <p id="resultDesc">Processing EEG epochs through CNN+Transformer...</p>
+            </div>
+            <div class="status-right">
+                <div class="confidence-number" id="confidenceVal">--</div>
+                <div class="confidence-label">Model Confidence</div>
+            </div>
+        </div>
+
+        <!-- Metric Tiles -->
+        <div class="metric-tiles">
+            <div class="metric-tile">
+                <div class="metric-tile-title">ADHD Probability</div>
+                <div class="metric-tile-val" id="probVal">--</div>
+                <div class="metric-tile-desc">Decision Cutoff: 0.500</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-tile-title">Epochs Analyzed</div>
+                <div class="metric-tile-val" id="epochsVal">--</div>
+                <div class="metric-tile-desc">2s windows @ 500Hz</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-tile-title">TBR (Fz)</div>
+                <div class="metric-tile-val" id="tbrFzVal">--</div>
+                <div class="metric-tile-desc">Normal &lt; 1.50</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-tile-title">TBR (Cz)</div>
+                <div class="metric-tile-val" id="tbrCzVal">--</div>
+                <div class="metric-tile-desc">Normal &lt; 1.80</div>
+            </div>
+        </div>
+
+        <!-- XAI Card -->
+        <div class="card">
+            <div class="card-header" style="justify-content: space-between;">
+                <span>&#x1F52C; Explainable AI &mdash; CNN+Transformer Interpretation</span>
+            </div>
+
+            <div class="xai-tab-bar">
+                <button class="xai-tab active" onclick="switchXaiTab('topo')">&#x1F9E0; Scalp Map</button>
+                <button class="xai-tab" onclick="switchXaiTab('epochs')">&#x1F4CA; Epoch Distribution</button>
+                <button class="xai-tab" onclick="switchXaiTab('bands')">&#x1F30A; Band Power</button>
+                <button class="xai-tab" onclick="switchXaiTab('explain')">&#x1F4A1; Explanation</button>
+            </div>
+
+            <!-- Tab: Scalp Map -->
+            <div class="xai-tab-content active" id="xaiTab-topo">
+                <div class="xai-section-title">10-20 EEG Scalp Topographic Attribution Map</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                    Each electrode is color-coded by its contribution weight to the CNN+Transformer prediction. Hover for details.
+                </p>
+                <div class="scalp-map-container" id="scalpMapContainer">
+                    <div class="scalp-tooltip" id="scalpTooltip"></div>
+                    <svg class="scalp-svg" viewBox="0 0 300 320" id="scalpSvg"></svg>
+                    <div class="scalp-legend">
+                        <span>Low</span>
+                        <div class="scalp-legend-bar"></div>
+                        <span>High</span>
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <div class="xai-section-title">Channel Attribution Ranking</div>
+                    <div id="channelBarsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Tab: Epoch Distribution -->
+            <div class="xai-tab-content" id="xaiTab-epochs">
+                <div class="xai-section-title">Per-Epoch ADHD Probability Distribution</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+                    Each bar represents one 2-second EEG epoch's ADHD probability.
+                    <span style="color:#f87171;">Red</span> = above 0.5 threshold,
+                    <span style="color:#34d399;">Green</span> = below.
+                </p>
+                <div id="epochDistContainer"></div>
+                <div style="margin-top: 16px;">
+                    <div class="xai-section-title">Epoch Statistics</div>
+                    <div id="epochStatsContainer" style="font-size: 13px; color: #d1d5db; line-height: 1.8;"></div>
+                </div>
+            </div>
+
+            <!-- Tab: Band Power -->
+            <div class="xai-tab-content" id="xaiTab-bands">
+                <div class="xai-section-title">Spectral Band Power Distribution (Frontal Average)</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+                    Relative power distribution across EEG frequency bands from the uploaded recording.
+                </p>
+                <div id="bandPowerContainer"></div>
+                <div style="margin-top: 24px;">
+                    <div class="xai-section-title">Theta/Beta Ratio &mdash; Clinical Gauge</div>
+                    <div id="tbrGaugeContainer"></div>
+                </div>
+            </div>
+
+            <!-- Tab: Explanation -->
+            <div class="xai-tab-content" id="xaiTab-explain">
+                <div class="xai-section-title">&#x1FA7A; CNN+Transformer Clinical Decision Explanation</div>
+                <div id="xaiExplanationText" style="font-size: 13px; line-height: 1.7; color: #d1d5db;">
+                    Run an analysis to generate the clinical explanation.
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        /* ===== STATE ===== */
+        let currentResult = null;
+        let uploadedSubjectId = null;
+        let pendingFile = null;
+
+        /* ===== UPLOAD HANDLING ===== */
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', e => { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault(); uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            pendingFile = file;
+            const fname = file.name;
+            const ext = fname.split('.').pop().toLowerCase();
+            const sizeKB = Math.round(file.size / 1024);
+
+            // Auto-detect subject ID from filename
+            const subMatch = fname.match(/(sub-\d+)/);
+            if (subMatch) {
+                document.getElementById('subjectIdInput').value = subMatch[1];
+            } else if (!document.getElementById('subjectIdInput').value) {
+                document.getElementById('subjectIdInput').value = fname.replace(/\.[^/.]+$/, '');
+            }
+
+            uploadZone.className = 'upload-zone success';
+            document.getElementById('uploadIcon').innerText = '\u2705';
+            document.getElementById('uploadTitle').innerText = `Ready: ${fname}`;
+            document.getElementById('uploadSub').innerText = `${sizeKB} KB \u00B7 .${ext} format \u00B7 Click "Run" to analyze`;
+            document.getElementById('fileBadge').innerText = `File: ${fname} (${sizeKB} KB)`;
+        }
+
+        function setUploadState(state, title, sub) {
+            uploadZone.className = 'upload-zone ' + state;
+            document.getElementById('uploadIcon').innerText =
+                state === 'processing' ? '\u23F3' : state === 'error' ? '\u274C' : state === 'success' ? '\u2705' : '\uD83D\uDCC2';
+            document.getElementById('uploadTitle').innerText = title;
+            document.getElementById('uploadSub').innerText = sub;
+        }
+
+        /* ===== RUN ANALYSIS ===== */
+        async function runAnalysis() {
+            const btn = document.getElementById('btnRun');
+            const subjectId = document.getElementById('subjectIdInput').value || 'UNKNOWN';
+
+            if (!pendingFile && !subjectId.startsWith('sub-')) {
+                alert('Please upload an EEG file or enter a valid subject ID (e.g. sub-88006297)');
+                return;
+            }
+
+            btn.innerHTML = '<span class="spinner"></span> Running CNN+Transformer...';
+            btn.disabled = true;
+
+            try {
+                let result;
+
+                if (pendingFile) {
+                    const ext = pendingFile.name.split('.').pop().toLowerCase();
+
+                    if (ext === 'npy' || ext === 'bdf' || ext === 'edf') {
+                        // Binary upload to server
+                        setUploadState('processing', `Processing: ${pendingFile.name}`, 'Running through CNN+Transformer pipeline...');
+                        const arrayBuf = await pendingFile.arrayBuffer();
+                        const resp = await fetch('/api/upload_eeg', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/octet-stream',
+                                'X-Subject-ID': subjectId,
+                                'X-Filename': pendingFile.name
+                            },
+                            body: arrayBuf
+                        });
+                        if (!resp.ok) {
+                            const err = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+                            throw new Error(err.error || `Server error ${resp.status}`);
+                        }
+                        result = await resp.json();
+
+                    } else if (ext === 'json' || ext === 'csv') {
+                        // Send file contents directly to upload endpoint for feature-based analysis
+                        setUploadState('processing', `Processing: ${pendingFile.name}`, 'Extracting features...');
+                        const arrayBuf = await pendingFile.arrayBuffer();
+                        const resp = await fetch('/api/upload_eeg', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/octet-stream',
+                                'X-Subject-ID': subjectId,
+                                'X-Filename': pendingFile.name
+                            },
+                            body: arrayBuf
+                        });
+                        if (!resp.ok) {
+                            const err = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+                            throw new Error(err.error || `Server error ${resp.status}`);
+                        }
+                        result = await resp.json();
+                    } else {
+                        throw new Error(`Unsupported file format: .${ext}`);
+                    }
+                } else {
+                    // No file - use subject_id to look up tensor on disk
+                    setUploadState('processing', `Looking up ${subjectId}...`, 'Searching TDBRAIN cohort tensor database...');
+                    const resp = await fetch('/api/predict_cnn', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ subject_id: subjectId })
+                    });
+                    if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+                        throw new Error(err.error || `Server error ${resp.status}`);
+                    }
+                    result = await resp.json();
+                }
+
+                if (result.error) throw new Error(result.error);
+
+                currentResult = result;
+                setUploadState('success',
+                    `Analyzed: ${result.prediction.n_epochs_analyzed} epochs`,
+                    `CNN+Transformer prediction complete \u00B7 ${result.prediction.classification}`);
+                document.getElementById('fileBadge').innerText = `Result: ${result.prediction.classification} (${result.prediction.confidence_percent}% confidence)`;
+                renderResults(result);
+
+            } catch (err) {
+                console.error('Analysis failed:', err);
+                setUploadState('error', 'Analysis Failed', err.message);
+                document.getElementById('fileBadge').innerText = 'Error';
+                alert('Analysis failed: ' + err.message);
+            } finally {
+                btn.innerHTML = '&#x1F680; Run CNN+Transformer Analysis';
+                btn.disabled = false;
+            }
+        }
+
+        /* ===== RENDER RESULTS ===== */
+        function renderResults(result) {
+            const panel = document.getElementById('resultsPanel');
+
+            // Replace placeholder with results from template
+            const tpl = document.getElementById('resultsTemplate');
+            panel.innerHTML = '';
+            panel.appendChild(tpl.content.cloneNode(true));
+
+            const isAdhd = result.prediction.classification === 'ADHD';
+            const pred = result.prediction;
+
+            // Status banner
+            const banner = document.getElementById('statusBanner');
+            banner.className = isAdhd ? 'status-banner adhd' : 'status-banner healthy';
+            document.getElementById('resultStatus').innerText = pred.status;
+            document.getElementById('resultDesc').innerText = isAdhd
+                ? 'CNN+Transformer detected abnormal temporal-spatial patterns consistent with ADHD.'
+                : 'EEG patterns within normal neurotypical range per CNN+Transformer analysis.';
+            document.getElementById('confidenceVal').innerText = pred.confidence_percent + '%';
+
+            // Metric tiles
+            document.getElementById('probVal').innerText = pred.probability;
+            document.getElementById('epochsVal').innerText = pred.n_epochs_analyzed;
+            const tbr = result.key_biomarkers || {};
+            document.getElementById('tbrFzVal').innerText = tbr.TBR_Fz || '--';
+            document.getElementById('tbrCzVal').innerText = tbr.TBR_Cz || '--';
+
+            // Pulse animation
+            ['statusBanner', 'probVal', 'epochsVal', 'tbrFzVal', 'tbrCzVal', 'confidenceVal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.classList.remove('value-pulse'); void el.offsetWidth; el.classList.add('value-pulse'); }
+            });
+
+            // XAI visualizations
+            renderScalpMap(result.channel_importance_percent || {});
+            renderChannelBars(result.channel_importance_percent || {});
+            renderEpochDistribution(result.epoch_probabilities || []);
+            renderBandPower(result.band_power_avg || {});
+            renderTBRGauges(tbr);
+            renderExplanation(result);
+        }
+
+        /* ===== XAI TAB SWITCHING ===== */
+        function switchXaiTab(tab) {
+            document.querySelectorAll('.xai-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.xai-tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            const content = document.getElementById('xaiTab-' + tab);
+            if (content) content.classList.add('active');
+        }
+
+        /* ===== SCALP TOPOGRAPHIC MAP ===== */
+        const ELECTRODE_POS = {
+            'Fp1': [110, 50], 'Fp2': [190, 50],
+            'F7': [60, 100], 'F3': [120, 100], 'Fz': [150, 100], 'F4': [180, 100], 'F8': [240, 100],
+            'FC3': [120, 130], 'FCz': [150, 130], 'FC4': [180, 130],
+            'T7': [50, 160], 'C3': [110, 160], 'Cz': [150, 160], 'C4': [190, 160], 'T8': [250, 160],
+            'CP3': [120, 190], 'CPz': [150, 190], 'CP4': [180, 190],
+            'P7': [60, 220], 'P3': [120, 220], 'Pz': [150, 220], 'P4': [180, 220], 'P8': [240, 220],
+            'O1': [120, 270], 'Oz': [150, 270], 'O2': [180, 270]
+        };
+
+        function importanceToColor(pct, maxPct) {
+            const ratio = Math.min(pct / (maxPct * 0.8), 1.0);
+            if (ratio < 0.25) return `rgb(30, ${58 + ratio * 400}, ${95 + ratio * 200})`;
+            if (ratio < 0.5) return `rgb(${37 + (ratio - 0.25) * 600}, ${99 + (ratio - 0.25) * 400}, 235)`;
+            if (ratio < 0.75) return `rgb(${6 + (ratio - 0.5) * 900}, ${182 + (ratio - 0.5) * 200}, ${212 - (ratio - 0.5) * 600})`;
+            return `rgb(${239 + (ratio - 0.75) * 60}, ${68 + (ratio - 0.75) * 100}, ${68 - (ratio - 0.75) * 100})`;
+        }
+
+        function renderScalpMap(channelImportance) {
+            const svg = document.getElementById('scalpSvg');
+            if (!svg) return;
+            svg.innerHTML = '';
+            const vals = Object.values(channelImportance);
+            const maxPct = Math.max(...vals, 1);
+
+            // Head outline
+            svg.innerHTML += `<ellipse cx="150" cy="160" rx="130" ry="140" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>`;
+            svg.innerHTML += `<path d="M150 20 L142 40 L158 40 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>`;
+
+            for (const [ch, [x, y]] of Object.entries(ELECTRODE_POS)) {
+                const pct = channelImportance[ch] || 0;
+                const color = importanceToColor(pct, maxPct);
+                const r = 10 + (pct / maxPct) * 6;
+
+                svg.innerHTML += `<circle class="scalp-electrode" cx="${x}" cy="${y}" r="${r}" fill="${color}" stroke="rgba(255,255,255,0.3)" stroke-width="0.5"
+                    onmouseenter="showScalpTip(event, '${ch}', ${pct})" onmouseleave="hideScalpTip()"/>`;
+                svg.innerHTML += `<text class="scalp-label" x="${x}" y="${y}">${ch}</text>`;
+            }
+        }
+
+        function showScalpTip(e, ch, pct) {
+            const tip = document.getElementById('scalpTooltip');
+            if (!tip) return;
+            tip.innerHTML = `<strong>${ch}</strong>: ${pct.toFixed(1)}% attribution`;
+            tip.style.left = (e.offsetX + 12) + 'px';
+            tip.style.top = (e.offsetY - 30) + 'px';
+            tip.classList.add('visible');
+        }
+        function hideScalpTip() {
+            const tip = document.getElementById('scalpTooltip');
+            if (tip) tip.classList.remove('visible');
+        }
+
+        /* ===== CHANNEL BARS ===== */
+        function renderChannelBars(channelImportance) {
+            const container = document.getElementById('channelBarsContainer');
+            if (!container) return;
+            let html = '';
+            const entries = Object.entries(channelImportance).slice(0, 8);
+            const maxPct = Math.max(...entries.map(e => e[1]), 1);
+            for (const [ch, pct] of entries) {
+                html += `<div class="channel-row">
+                    <div class="channel-label-row"><span>${ch}</span><span>${pct.toFixed(1)}%</span></div>
+                    <div class="channel-bar-bg"><div class="channel-bar-fill" style="width:${Math.min(pct / maxPct * 100, 100)}%"></div></div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        /* ===== EPOCH DISTRIBUTION ===== */
+        function renderEpochDistribution(probs) {
+            const container = document.getElementById('epochDistContainer');
+            const stats = document.getElementById('epochStatsContainer');
+            if (!container) return;
+
+            let html = '<div class="epoch-dist">';
+            const maxDisplay = Math.min(probs.length, 80);
+            for (let i = 0; i < maxDisplay; i++) {
+                const p = probs[i];
+                const h = Math.max(p * 100, 3);
+                const cls = p >= 0.5 ? 'adhd' : 'healthy';
+                html += `<div class="epoch-bar ${cls}" style="height:${h}%" title="Epoch ${i+1}: ${(p*100).toFixed(1)}%"></div>`;
+            }
+            html += '</div>';
+            if (probs.length > maxDisplay) html += `<p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Showing ${maxDisplay} of ${probs.length} epochs</p>`;
+            container.innerHTML = html;
+
+            if (stats) {
+                const mean = probs.reduce((a,b) => a+b, 0) / probs.length;
+                const above = probs.filter(p => p >= 0.5).length;
+                const pctAbove = ((above / probs.length) * 100).toFixed(1);
+                const min = Math.min(...probs).toFixed(3);
+                const max = Math.max(...probs).toFixed(3);
+                stats.innerHTML = `
+                    <strong>Mean probability:</strong> ${mean.toFixed(4)}<br>
+                    <strong>Epochs above threshold:</strong> ${above}/${probs.length} (${pctAbove}%)<br>
+                    <strong>Range:</strong> ${min} &ndash; ${max}<br>
+                    <strong>Consistency:</strong> ${pctAbove > 70 ? '<span style="color:#f87171">Strong ADHD signal across epochs</span>' : pctAbove < 30 ? '<span style="color:#34d399">Consistently healthy pattern</span>' : '<span style="color:#fbbf24">Mixed / borderline signal</span>'}
+                `;
+            }
+        }
+
+        /* ===== BAND POWER ===== */
+        function renderBandPower(bandPower) {
+            const container = document.getElementById('bandPowerContainer');
+            if (!container) return;
+            const bands = ['delta', 'theta', 'alpha', 'beta', 'gamma'];
+            const labels = { delta: '\u03B4 Delta', theta: '\u03B8 Theta', alpha: '\u03B1 Alpha', beta: '\u03B2 Beta', gamma: '\u03B3 Gamma' };
+            const colors = { delta: '#6366f1', theta: '#f59e0b', alpha: '#10b981', beta: '#3b82f6', gamma: '#ec4899' };
+
+            let html = '';
+            const maxVal = Math.max(...bands.map(b => bandPower[b] || 0), 0.01);
+            for (const b of bands) {
+                const val = bandPower[b] || 0;
+                const pct = (val / maxVal) * 90;
+                html += `<div class="band-row">
+                    <div class="band-name" style="color:${colors[b]}">${labels[b]}</div>
+                    <div class="band-track"><div class="band-fill" style="width:${pct}%;background:${colors[b]}"></div></div>
+                    <span style="font-size:11px;font-weight:700;color:#cbd5e1;width:50px;text-align:right">${(val*100).toFixed(1)}%</span>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        /* ===== TBR GAUGE ===== */
+        function renderTBRGauges(tbr) {
+            const container = document.getElementById('tbrGaugeContainer');
+            if (!container) return;
+            const sites = [];
+            if (tbr.TBR_Fz != null) sites.push({ label: 'Fz (Frontal Midline)', value: tbr.TBR_Fz });
+            if (tbr.TBR_Cz != null) sites.push({ label: 'Cz (Central Midline)', value: tbr.TBR_Cz });
+            if (sites.length === 0) { container.innerHTML = '<p style="color:var(--text-muted);font-size:12px;">TBR data not available</p>'; return; }
+
+            let html = '';
+            for (const site of sites) {
+                const pct = Math.min((site.value / 3.0) * 100, 98);
+                const tagColor = site.value >= 1.5 ? '#f87171' : site.value >= 1.2 ? '#fbbf24' : '#34d399';
+                html += `<div class="tbr-gauge-item">
+                    <div class="tbr-gauge-label"><span>${site.label}</span><span style="color:${tagColor};font-weight:700">${site.value.toFixed(3)}</span></div>
+                    <div class="tbr-gauge-track">
+                        <div class="tbr-gauge-needle" style="left:${pct}%"><div class="tbr-gauge-value-tag" style="color:${tagColor}">${site.value.toFixed(2)}</div></div>
+                    </div>
+                    <div class="tbr-gauge-zones"><span style="flex:50%">Normal (&lt;1.5)</span><span style="flex:25%">Borderline</span><span style="flex:25%">Elevated</span></div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        /* ===== CLINICAL EXPLANATION ===== */
+        function renderExplanation(result) {
+            const el = document.getElementById('xaiExplanationText');
+            if (!el) return;
+            const pred = result.prediction;
+            const isAdhd = pred.classification === 'ADHD';
+            const subId = document.getElementById('subjectIdInput').value || 'Patient';
+            const tbr = result.key_biomarkers || {};
+            const topChannels = Object.entries(result.channel_importance_percent || {}).slice(0, 5);
+            const rc = isAdhd ? 'risk' : 'normal';
+            const hStyle = (cls, text) => `<span style="font-weight:700;padding:1px 6px;border-radius:4px;font-size:12px;${cls === 'risk' ? 'background:rgba(239,68,68,0.2);color:#f87171' : cls === 'normal' ? 'background:rgba(16,185,129,0.2);color:#34d399' : 'background:rgba(59,130,246,0.15);color:#93c5fd'}">${text}</span>`;
+
+            let html = `<p style="margin-bottom:14px"><strong>Subject:</strong> ${hStyle('neutral', subId)} &nbsp;|&nbsp; <strong>Model:</strong> ${hStyle(rc, pred.status)} at ${hStyle(rc, pred.confidence_percent + '%')} confidence (P=${pred.probability})</p>`;
+
+            html += `<p style="margin-bottom:14px"><strong>&#x1F916; Architecture:</strong> Hybrid CNN+Transformer (EEGConvTransformer)<br>
+                The model first extracts spatio-temporal features via depthwise separable convolutions, then models long-range temporal dependencies through multi-head self-attention (2 Transformer layers, 4 heads). An attention-weighted pooling layer aggregates temporal tokens for final classification.</p>`;
+
+            if (tbr.TBR_Fz != null) {
+                html += `<p style="margin-bottom:14px"><strong>&#x1F4CD; Biomarker Assessment:</strong><br>
+                    TBR<sub>Fz</sub> = ${hStyle(tbr.TBR_Fz >= 1.5 ? 'risk' : 'normal', tbr.TBR_Fz)}
+                    ${tbr.TBR_Fz >= 1.5 ? ' &mdash; <em>above clinical threshold</em>' : ' &mdash; <em>within normal range</em>'}<br>
+                    TBR<sub>Cz</sub> = ${hStyle((tbr.TBR_Cz || 0) >= 1.5 ? 'risk' : 'normal', tbr.TBR_Cz || '--')}
+                    ${(tbr.TBR_Cz || 0) >= 1.5 ? ' &mdash; <em>elevated</em>' : ' &mdash; <em>within normal limits</em>'}</p>`;
+            }
+
+            html += `<p style="margin-bottom:14px"><strong>&#x1F9E0; Top Electrode Regions:</strong><br>`;
+            html += topChannels.map(([ch, pct]) => hStyle('neutral', `${ch} (${pct}%)`)).join(', ');
+            html += '</p>';
+
+            html += `<p style="margin-bottom:14px"><strong>&#x1F4CA; Epoch Consistency:</strong><br>
+                The model analyzed <strong>${pred.n_epochs_analyzed}</strong> two-second EEG epochs.
+                ${isAdhd ? 'A majority of epochs showed elevated ADHD probability, indicating a consistent abnormal pattern.' : 'Most epochs showed sub-threshold probability, consistent with neurotypical EEG patterns.'}</p>`;
+
+            html += `<p style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-subtle);font-size:11px;color:var(--text-muted)">
+                <em>&#x26A0; This explanation is auto-generated from the CNN+Transformer model analysis. It supports &mdash; does not replace &mdash; clinical psychiatric judgment.</em></p>`;
+
+            el.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
