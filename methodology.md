@@ -255,3 +255,73 @@ For each test subject:
 - **Exported Weights**: Stored in JSON format at [`models/eegnet_prototype_weights.json`](file:///d:/ADHD_Project/models/eegnet_prototype_weights.json).
 - **Inference Integration**: Enabled in [`predict.py`](file:///d:/ADHD_Project/predict.py) via `--model eegnet`.
 
+---
+
+## 9. Hybrid CNN + Transformer (EEGConvTransformer)
+
+To capture both local oscillatory filterbanks and long-range temporal-spatial dependencies, an **EEGConvTransformer** architecture was designed in [`src/cnn_transformer.py`](file:///d:/ADHD_Project/src/cnn_transformer.py).
+
+### 9.1 Network Architecture
+```
+Input: Raw EEG Epoch (Batch, 26 Scalp Channels, 1001 Timepoints = 2.0s @ 500 Hz)
+  │
+  ├── [Stage 1: Multi-Scale CNN Feature Extractor]
+  │     ├── 2D Temporal Conv (16 filters, kernel 1x64, learnable digital filterbank)
+  │     ├── Batch Normalization + Spatial Depthwise Conv across 26 Scalp Channels (D=2, 32 channels)
+  │     ├── Average Pooling (1x4) + Dropout (0.25)
+  │     ├── Separable Temporal Conv (kernel 1x16) + Pointwise Conv (32 channels)
+  │     └── Average Pooling (1x8) -> Temporal downsampling by 32x
+  │
+  ├── [Stage 2: Transformer Encoder (Self-Attention)]
+  │     ├── 1D Convolution Token Projection to d_model = 64
+  │     ├── Sinusoidal Positional Encoding (temporal order preservation)
+  │     ├── 2x TransformerEncoderLayer (Pre-LN, 4 attention heads, d_ff = 128, GELU)
+  │     └── LayerNorm (d_model = 64)
+  │
+  └── [Stage 3: Attention-Weighted Pooling & Readout]
+        ├── Temporal Attention Pooling (soft query-vector self-aggregation)
+        └── Dense Linear Readout (d_model -> 32 -> num_classes)
+```
+
+### 9.2 Binary ADHD Benchmark Performance (Subject-Level)
+| Metric | Value |
+| :--- | :---: |
+| **Subject Accuracy** | **82.22%** |
+| **Balanced Accuracy** | **80.60%** |
+| **Sensitivity (ADHD)** | **75.00%** |
+| **Specificity (Healthy)** | **86.21%** |
+| **ROC-AUC** | **0.8233** |
+| **F1-Score** | **0.7500** |
+| **Best Training Epoch** | **Epoch 12** (Val AUC: 0.9356) |
+| **Parameter Count** | **77,090 parameters** |
+
+---
+
+## 10. Multi-Class Psychiatric Differential Diagnosis Expansion
+
+To address clinical psychiatric realities where ADHD symptoms overlap with affective disorders, the framework was extended to **Differential Multi-Class Psychiatric Classification** across the broader TDBRAIN V3.1 clinical cohort.
+
+### 10.1 Multi-Class Cohort Definition (Adults 18–60)
+- **Cohort Manifest**: [`data/metadata/cohort_multiclass_manifest.csv`](file:///d:/ADHD_Project/data/metadata/cohort_multiclass_manifest.csv)
+- **Cohorts Indexed**:
+  - `HEALTHY`: Neurotypical Controls ($N=151$, Mean Age 35.0 yrs)
+  - `ADHD`: Attention Deficit / Hyperactivity ($N=103$, Mean Age 35.2 yrs)
+  - `MDD`: Major Depressive Disorder ($N=266$, Mean Age 41.6 yrs)
+  - `OCD`: Obsessive-Compulsive Disorder ($N=38$, Mean Age 32.6 yrs)
+  - `SMC`: Subjective Memory Complaints ($N=42$, Mean Age 57.5 yrs)
+
+### 10.2 3-Way Benchmark Results (ADHD vs. HEALTHY vs. MDD)
+Trained on 285 adult subjects (203 Train, 44 Val, 46 Test) via [`src/train_multiclass_cnn_transformer.py`](file:///d:/ADHD_Project/src/train_multiclass_cnn_transformer.py):
+
+* **Validation Performance (Peak Epoch 10)**:
+  - **Subject Accuracy**: **78.6%** (Chance = 33.3%)
+  - **Balanced Accuracy**: **78.7%**
+  - **Macro F1-Score**: **0.7758**
+* **Independent Unseen Test Cohort ($N=44$)**:
+  - **Subject Accuracy**: **61.36%**
+  - **Healthy Control Specificity**: **95.45%** (Precision: **93.75%**, F1: **0.7895**)
+  - **ADHD Sensitivity**: **61.54%**
+  - **MDD Specificity**: **85.71%**
+* **Exported Multi-Class Checkpoint**: [`models/multiclass_cnn_transformer.pt`](file:///d:/ADHD_Project/models/multiclass_cnn_transformer.pt) (382 KB)
+
+

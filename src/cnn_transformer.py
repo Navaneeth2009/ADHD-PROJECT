@@ -86,8 +86,10 @@ class EEGConvTransformer(nn.Module):
         num_layers: int = 2,
         dim_feedforward: int = 128,
         dropout: float = 0.25,
+        num_classes: int = 1,
     ):
         super().__init__()
+        self.num_classes = num_classes
         self.n_channels = n_channels
         self.n_samples = n_samples
         self.d_model = d_model
@@ -173,7 +175,7 @@ class EEGConvTransformer(nn.Module):
             nn.Linear(d_model, 32),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(32, 1)  # Logit output for binary ADHD classification
+            nn.Linear(32, num_classes)  # Logits: 1 for binary, C for multi-class
         )
 
     def extract_tokens(self, x: torch.Tensor) -> torch.Tensor:

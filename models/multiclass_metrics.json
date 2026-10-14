@@ -1,0 +1,56 @@
+{
+  "model": "MultiClass_EEGConvTransformer",
+  "classes": {
+    "0": "ADHD",
+    "1": "HEALTHY",
+    "2": "MDD"
+  },
+  "best_epoch": 10,
+  "training_duration": 1177.88,
+  "test_metrics": {
+    "epoch_accuracy": 0.6222,
+    "subject_accuracy": 0.6136,
+    "balanced_accuracy": 0.5805,
+    "macro_f1": 0.578,
+    "confusion_matrix": [
+      [
+        8,
+        1,
+        4
+      ],
+      [
+        6,
+        15,
+        1
+      ],
+      [
+        5,
+        0,
+        4
+      ]
+    ],
+    "per_class": {
+      "ADHD": {
+        "sensitivity_recall": 0.6154,
+        "specificity": 0.6452,
+        "precision": 0.4211,
+        "f1_score": 0.5,
+        "support": 13
+      },
+      "HEALTHY": {
+        "sensitivity_recall": 0.6818,
+        "specificity": 0.9545,
+        "precision": 0.9375,
+        "f1_score": 0.7895,
+        "support": 22
+      },
+      "MDD": {
+        "sensitivity_recall": 0.4444,
+        "specificity": 0.8571,
+        "precision": 0.4444,
+        "f1_score": 0.4444,
+        "support": 9
+      }
+    }
+  }
+}
